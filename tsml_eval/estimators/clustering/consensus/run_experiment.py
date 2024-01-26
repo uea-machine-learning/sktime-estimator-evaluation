@@ -30,6 +30,9 @@ if __name__ == "__main__":
         "wddtw",
         "wdtw",
     ]
+    err_datasets = []
+    for val in SKIP_DATASETS:
+        err_datasets.append(val)
 
     for dataset in datasets:
         clusterers = [
@@ -55,7 +58,11 @@ if __name__ == "__main__":
             run_clustering_experiment(X_train, y_train, c, RESULT_PATH, X_test=X_test, y_test=y_test, n_clusters=-1, dataset_name=dataset, resample_id=0, build_test_file=True)
         except ValueError as e:
             print(f"======== Error in {dataset} ========")
+            err_datasets.append(dataset)
             print(e)
             continue
+
+        print(f"======== Finished {dataset} ========")
+        print(err_datasets)
 
 
