@@ -12,10 +12,12 @@ from aeon.clustering import (
 from aeon.transformations.collection import TimeSeriesScaler
 from sklearn.cluster import KMeans
 
+from tsml_eval.estimators.clustering import TimeSeriesDBScan
 from tsml_eval.utils.experiments import load_experiment_data
 from tsml_eval.utils.functions import str_in_nested_list
 
 distance_based_clusterers = [
+    # ================================= K-Means ===================================
     "kmeans-euclidean",
     "kmeans-squared",
     "kmeans-dtw",
@@ -29,6 +31,8 @@ distance_based_clusterers = [
     "kmeans-msm",
     "kmeans-adtw",
     "kmeans-shape_dtw",
+    # ================================= K-Means ===================================
+    # ================================ K-Medoids ==================================
     "kmedoids-euclidean",
     "kmedoids-squared",
     "kmedoids-dtw",
@@ -42,6 +46,8 @@ distance_based_clusterers = [
     "kmedoids-msm",
     "kmedoids-adtw",
     "kmedoids-shape_dtw",
+    # ================================ K-Medoids ==================================
+    # ================================= CLARANS ===================================
     "clarans-euclidean",
     "clarans-squared",
     "clarans-dtw",
@@ -55,6 +61,8 @@ distance_based_clusterers = [
     "clarans-msm",
     "clarans-adtw",
     "clarans-shape_dtw",
+    # ================================= CLARANS ===================================
+    # ================================== CLARA ====================================
     "clara-euclidean",
     "clara-squared",
     "clara-dtw",
@@ -68,6 +76,8 @@ distance_based_clusterers = [
     "clara-msm",
     "clara-adtw",
     "clara-shape_dtw",
+    # ================================== CLARA ====================================
+    # ===================================== PAM ====================================
     "pam-euclidean",
     "pam-squared",
     "pam-dtw",
@@ -81,6 +91,8 @@ distance_based_clusterers = [
     "pam-msm",
     "pam-adtw",
     "pam-shape_dtw",
+    # ===================================== PAM ====================================
+    # ===================================== BA =====================================
     "kmeans-ba-dtw",
     "kmeans-ba-ddtw",
     "kmeans-ba-wdtw",
@@ -92,6 +104,8 @@ distance_based_clusterers = [
     "kmeans-ba-msm",
     "kmeans-ba-adtw",
     "kmeans-ba-shape_dtw",
+    # ===================================== BA =====================================
+    # ================================== SSG-BA ====================================
     "kmeans-ssg-ba-dtw",
     "kmeans-ssg-ba-ddtw",
     "kmeans-ssg-ba-wdtw",
@@ -102,10 +116,22 @@ distance_based_clusterers = [
     "kmeans-ssg-ba-msm",
     "kmeans-ssg-ba-adtw",
     "kmeans-ssg-ba-shape_dtw",
-    "timeserieskmeans",
-    "timeserieskmedoids",
-    "timeseriesclarans",
-    "timeseriesclara",
+    # ================================== SSG-BA ====================================
+    # =================================== DBSCAN ===================================
+    "DBSCAN-euclidean",
+    "DBSCAN-squared",
+    "DBSCAN-dtw",
+    "DBSCAN-ddtw",
+    "DBSCAN-wdtw",
+    "DBSCAN-wddtw",
+    "DBSCAN-lcss",
+    "DBSCAN-erp",
+    "DBSCAN-edr",
+    "DBSCAN-twe",
+    "DBSCAN-msm",
+    "DBSCAN-adtw",
+    "DBSCAN-shape_dtw",
+    # =================================== DBSCAN ===================================
 ]
 
 other_clusterers = [
@@ -214,6 +240,11 @@ def _set_clusterer_distance_based(
             distance, data_vars, row_normalise
         )
 
+    if "precomputed_distance_path" in kwargs:
+        precomputed_distances = np.load(kwargs["precomputed_distance_path"])
+    else:
+        precomputed_distances = None
+
     if "kmeans" in c or "timeserieskmeans" in c:
         if "average_params" in kwargs:
             average_params = kwargs["average_params"]
@@ -298,6 +329,17 @@ def _set_clusterer_distance_based(
             distance=distance,
             distance_params=distance_params,
             random_state=random_state,
+            **kwargs,
+        )
+    elif "DBSCAN" in c or "timeseriesdbscan" in c:
+        return TimeSeriesDBScan(
+            eps=0.5,
+            min_samples=5,
+            distance=distance,
+            distance_params=distance_params,
+            precomputed_distances=precomputed_distances,
+            algorithm="auto",
+            leaf_size=30,
             **kwargs,
         )
     return None
