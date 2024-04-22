@@ -49,11 +49,9 @@ class TimeSeriesHDBScan(BaseClusterer):
         A pairwise distance matrix where `precomputed_distances[i, j]` is the distance
         between samples `X[i]` and `X[j]`. If None, the distance matrix is computed
         using the distance metric specified by `distance`.
-
     alpha : float, default=1.0
         A distance scaling parameter as used in robust single linkage.
         See [3]_ for more information.
-
     algorithm : {"auto", "brute", "kd_tree", "ball_tree"}, default="auto"
         Exactly which algorithm to use for computing core distances; By default
         this is set to `"auto"` which attempts to use a
@@ -61,7 +59,6 @@ class TimeSeriesHDBScan(BaseClusterer):
         a :class:`~sklearn.neighbors.BallTree` tree. Both `"kd_tree"` and
         `"ball_tree"` algorithms use the
         :class:`~sklearn.neighbors.NearestNeighbors` estimator.
-
         If the `X` passed during `fit` is sparse or `metric` is invalid for
         both :class:`~sklearn.neighbors.KDTree` and
         :class:`~sklearn.neighbors.BallTree`, then it resolves to use the

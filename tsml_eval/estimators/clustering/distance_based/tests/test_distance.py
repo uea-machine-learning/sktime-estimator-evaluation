@@ -96,3 +96,11 @@ def test_hdbscan(distance):
 )
 def test_agglomerative(distance):
     _run_distance_test(TimeSeriesAgglomerative, distance)
+
+    X = make_example_3d_numpy(n_cases, n_channels, n_timepoints, return_y=False)
+    model = TimeSeriesAgglomerative(distance=distance)
+    # Test as experiments set n_clusters like this
+    model.set_params(n_clusters=5)
+    model.fit(X)
+    assert model.n_clusters_ == 5
+

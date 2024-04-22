@@ -12,7 +12,11 @@ from aeon.clustering import (
 from aeon.transformations.collection import TimeSeriesScaler
 from sklearn.cluster import KMeans
 
-from tsml_eval.estimators.clustering import TimeSeriesDBScan
+from tsml_eval.estimators.clustering import (
+    TimeSeriesDBScan,
+    TimeSeriesHDBScan,
+    TimeSeriesAgglomerative
+)
 from tsml_eval.utils.experiments import load_experiment_data
 from tsml_eval.utils.functions import str_in_nested_list
 
@@ -132,6 +136,36 @@ distance_based_clusterers = [
     "DBSCAN-adtw",
     "DBSCAN-shape_dtw",
     # =================================== DBSCAN ===================================
+    # =================================== HDBSCAN ==================================
+    "HDBSCAN-euclidean",
+    "HDBSCAN-squared",
+    "HDBSCAN-dtw",
+    "HDBSCAN-ddtw",
+    "HDBSCAN-wdtw",
+    "HDBSCAN-wddtw",
+    "HDBSCAN-lcss",
+    "HDBSCAN-erp",
+    "HDBSCAN-edr",
+    "HDBSCAN-twe",
+    "HDBSCAN-msm",
+    "HDBSCAN-adtw",
+    "HDBSCAN-shape_dtw",
+    # =================================== HDBSCAN ==================================
+    # ================================ Agglomerative ===============================
+    "agglomerative-euclidean",
+    "agglomerative-squared",
+    "agglomerative-dtw",
+    "agglomerative-ddtw",
+    "agglomerative-wdtw",
+    "agglomerative-wddtw",
+    "agglomerative-lcss",
+    "agglomerative-erp",
+    "agglomerative-edr",
+    "agglomerative-twe",
+    "agglomerative-msm",
+    "agglomerative-adtw",
+    "agglomerative-shape_dtw",
+    # ================================ Agglomerative ===============================
 ]
 
 other_clusterers = [
@@ -331,15 +365,46 @@ def _set_clusterer_distance_based(
             random_state=random_state,
             **kwargs,
         )
+    elif "HDBSCAN" in c or "timeserieshdbscan" in c:
+            return TimeSeriesHDBScan(
+                min_cluster_size=5,
+                min_samples=None,
+                cluster_selection_epsilon=0.,
+                max_cluster_size=None,
+                distance=distance,
+                distance_params=distance_params,
+                precomputed_distances=precomputed_distances,
+                alpha=1.0,
+                algorithm="auto",
+                leaf_size=40,
+                cluster_selection_method="eom",
+                allow_single_cluster=False,
+                store_centers=None,
+                copy=False,
+                **kwargs,
+            )
     elif "DBSCAN" in c or "timeseriesdbscan" in c:
-        return TimeSeriesDBScan(
-            eps=0.5,
-            min_samples=5,
+            return TimeSeriesDBScan(
+                eps=0.5,
+                min_samples=5,
+                distance=distance,
+                distance_params=distance_params,
+                precomputed_distances=precomputed_distances,
+                algorithm="auto",
+                leaf_size=30,
+                **kwargs,
+            )
+    elif "agglomerative" in c or "timeseriesagglomerative" in c:
+        return TimeSeriesAgglomerative(
             distance=distance,
             distance_params=distance_params,
             precomputed_distances=precomputed_distances,
-            algorithm="auto",
-            leaf_size=30,
+            memory=None,
+            connectivity=None,
+            compute_full_tree="auto",
+            linkage="ward",
+            distance_threshold=None,
+            compute_distances=False,
             **kwargs,
         )
     return None

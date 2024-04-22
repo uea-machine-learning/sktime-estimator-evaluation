@@ -160,6 +160,10 @@ class TimeSeriesAgglomerative(BaseClusterer):
                 X, metric=self.distance, **distance_params
             )
 
+        # This is here for experiments as they set this value
+        if self._model.n_clusters != self.n_clusters:
+            self._model.set_params(n_clusters=self.n_clusters)
+
         self._model.fit(self._precomputed_distances)
 
         self.n_clusters_ = self._model.n_clusters_
