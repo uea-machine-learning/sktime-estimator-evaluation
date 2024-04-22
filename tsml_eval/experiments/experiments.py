@@ -717,6 +717,7 @@ def load_and_run_clustering_experiment(
         )
         X_test = None
         y_test = None
+        build_test_file = False
 
     run_clustering_experiment(
         X_train,

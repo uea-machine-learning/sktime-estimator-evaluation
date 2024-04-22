@@ -1,5 +1,7 @@
 __all__ = [
-    "TimeSeriesDBScan"
+    "TimeSeriesDBScan",
+    "TimeSeriesAgglomerative",
 ]
 
 from tsml_eval.estimators.clustering.distance_based._dbscan import TimeSeriesDBScan
+from tsml_eval.estimators.clustering.distance_based._agglomerative import TimeSeriesAgglomerative

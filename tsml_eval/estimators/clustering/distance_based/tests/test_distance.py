@@ -4,7 +4,8 @@ from aeon.testing.utils.data_gen import make_example_3d_numpy
 from aeon.distances import pairwise_distance
 
 from tsml_eval.estimators.clustering import (
-    TimeSeriesDBScan
+    TimeSeriesDBScan,
+    TimeSeriesAgglomerative
 )
 
 n_cases = 20
@@ -53,3 +54,24 @@ def _run_distance_test(clusterer, distance, **kwargs):
 )
 def test_dbscan(distance):
     _run_distance_test(TimeSeriesDBScan, distance)
+
+
+@pytest.mark.parametrize(
+    "distance",
+    [
+        "euclidean",
+        "adtw",
+        "dtw",
+        "ddtw",
+        "wdtw",
+        "wddtw",
+        "erp",
+        "edr",
+        "lcss",
+        "twe",
+        "msm",
+        "shape_dtw",
+    ],
+)
+def test_agglomerative(distance):
+    _run_distance_test(TimeSeriesAgglomerative, distance)
