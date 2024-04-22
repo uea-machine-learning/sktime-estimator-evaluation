@@ -7,3 +7,4 @@ __all__ = [
 from tsml_eval.estimators.clustering.distance_based._dbscan import TimeSeriesDBScan
 from tsml_eval.estimators.clustering.distance_based._agglomerative import TimeSeriesAgglomerative
 from tsml_eval.estimators.clustering.distance_based._hdbscan import TimeSeriesHDBScan
+from tsml_eval.estimators.clustering.distance_based._optics import TimeSeriesOPTICS

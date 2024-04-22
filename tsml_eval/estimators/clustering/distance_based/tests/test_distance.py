@@ -6,7 +6,8 @@ from aeon.distances import pairwise_distance
 from tsml_eval.estimators.clustering import (
     TimeSeriesDBScan,
     TimeSeriesHDBScan,
-    TimeSeriesAgglomerative
+    TimeSeriesAgglomerative,
+    TimeSeriesOPTICS
 )
 
 n_cases = 20
@@ -56,6 +57,7 @@ def _run_distance_test(clusterer, distance, **kwargs):
 def test_dbscan(distance):
     _run_distance_test(TimeSeriesDBScan, distance)
 
+
 @pytest.mark.parametrize(
     "distance",
     [
@@ -104,3 +106,23 @@ def test_agglomerative(distance):
     model.fit(X)
     assert model.n_clusters_ == 5
 
+
+@pytest.mark.parametrize(
+    "distance",
+    [
+        "euclidean",
+        "adtw",
+        "dtw",
+        "ddtw",
+        "wdtw",
+        "wddtw",
+        "erp",
+        "edr",
+        "lcss",
+        "twe",
+        "msm",
+        "shape_dtw",
+    ],
+)
+def test_optics(distance):
+    _run_distance_test(TimeSeriesOPTICS, distance)

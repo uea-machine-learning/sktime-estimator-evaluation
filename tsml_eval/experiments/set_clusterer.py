@@ -166,6 +166,21 @@ distance_based_clusterers = [
     "agglomerative-adtw",
     "agglomerative-shape_dtw",
     # ================================ Agglomerative ===============================
+    # =================================== OPTICS ===================================
+    "OPTICS-euclidean",
+    "OPTICS-squared",
+    "OPTICS-dtw",
+    "OPTICS-ddtw",
+    "OPTICS-wdtw",
+    "OPTICS-wddtw",
+    "OPTICS-lcss",
+    "OPTICS-erp",
+    "OPTICS-edr",
+    "OPTICS-twe",
+    "OPTICS-msm",
+    "OPTICS-adtw",
+    "OPTICS-shape_dtw",
+    # =================================== OPTICS ===================================
 ]
 
 other_clusterers = [
