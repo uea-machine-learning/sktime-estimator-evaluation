@@ -132,6 +132,10 @@ class TimeSeriesDBScan(BaseClusterer):
         self.core_sample_indices_ = self._model.core_sample_indices_
         self.components_ = self._model.components_
         self.labels_ = self._model.labels_
+        if hasattr(self._model, 'n_features_in_'):
+            self.n_features_in_ = self._model.n_features_in_
+        if hasattr(self._model, 'feature_names_in_'):
+            self.feature_names_in_ = self._model.feature_names_in_
 
     def fit_predict(self, X, y=None) -> np.ndarray:
         self.fit(X, y)

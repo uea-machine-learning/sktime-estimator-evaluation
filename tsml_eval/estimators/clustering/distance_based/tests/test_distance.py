@@ -5,6 +5,7 @@ from aeon.distances import pairwise_distance
 
 from tsml_eval.estimators.clustering import (
     TimeSeriesDBScan,
+    TimeSeriesHDBScan,
     TimeSeriesAgglomerative
 )
 
@@ -54,6 +55,26 @@ def _run_distance_test(clusterer, distance, **kwargs):
 )
 def test_dbscan(distance):
     _run_distance_test(TimeSeriesDBScan, distance)
+
+@pytest.mark.parametrize(
+    "distance",
+    [
+        "euclidean",
+        "adtw",
+        "dtw",
+        "ddtw",
+        "wdtw",
+        "wddtw",
+        "erp",
+        "edr",
+        "lcss",
+        "twe",
+        "msm",
+        "shape_dtw",
+    ],
+)
+def test_hdbscan(distance):
+    _run_distance_test(TimeSeriesHDBScan, distance)
 
 
 @pytest.mark.parametrize(

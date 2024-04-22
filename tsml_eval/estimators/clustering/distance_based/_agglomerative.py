@@ -144,6 +144,9 @@ class TimeSeriesAgglomerative(BaseClusterer):
         self.n_leaves_ = None
         self.n_connected_components_ = None
         self.children_ = None
+        self.distances_ = None
+        self.n_features_in_ = None
+        self.feature_names_in_ = None
 
         super().__init__(n_clusters=n_clusters)
 
@@ -164,6 +167,12 @@ class TimeSeriesAgglomerative(BaseClusterer):
         self.n_leaves_ = self._model.n_leaves_
         self.n_connected_components_ = self._model.n_connected_components_
         self.children_ = self._model.children_
+        if hasattr(self._model, 'distances_'):
+            self.distances_ = self._model.distances_
+        if hasattr(self._model, 'feature_names_in_'):
+            self.feature_names_in_ = self._model.feature_names_in_
+        if hasattr(self._model, 'n_features_in_'):
+            self.n_features_in_ = self._model.n_features_in_
 
     def fit_predict(self, X, y=None) -> np.ndarray:
         self.fit(X, y)
