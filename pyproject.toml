@@ -47,6 +47,7 @@ dependencies = [
     "matplotlib",
     "gpustat",
     "psutil",
+    "DPA@git+https://github.com/mariaderrico/DPA",
 ]
 
 [project.optional-dependencies]
