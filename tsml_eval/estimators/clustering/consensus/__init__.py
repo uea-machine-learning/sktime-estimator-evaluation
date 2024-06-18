@@ -5,6 +5,11 @@ __all__ = [
     "FromFileIterativeVotingClustering",
     "SimpleVote",
     "FromFileSimpleVote",
+    "CSPAFromFile",
+    "HGPAFromFile",
+    "MCLAFromFile",
+    "HBGFFromFile",
+    "NMFFromFile",
 ]
 
 from tsml_eval.estimators.clustering.consensus.ivc import IterativeVotingClustering
@@ -14,4 +19,11 @@ from tsml_eval.estimators.clustering.consensus.ivc_from_file import (
 from tsml_eval.estimators.clustering.consensus.simple_vote import SimpleVote
 from tsml_eval.estimators.clustering.consensus.simple_vote_from_file import (
     FromFileSimpleVote,
+)
+from tsml_eval.estimators.clustering.consensus.cluster_ensemble_package import (
+    CSPAFromFile,
+    HGPAFromFile,
+    MCLAFromFile,
+    HBGFFromFile,
+    NMFFromFile,
 )
