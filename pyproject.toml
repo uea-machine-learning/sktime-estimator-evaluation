@@ -94,7 +94,6 @@ docs = [
 ]
 clustering = [
     "pymetis",
-    "kahypar",
 ]
 
 [project.urls]
