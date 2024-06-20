@@ -109,4 +109,4 @@ def get_dataset_list_for_model_dir(model_dir: str):
     for missing in missing_set:
         full_dataset_set.remove(missing)
 
-    return list(full_dataset_set), list(missing_copy.keys())
+    return sorted(list(full_dataset_set)), list(missing_copy.keys())

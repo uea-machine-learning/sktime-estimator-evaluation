@@ -77,11 +77,13 @@ class BaseFromFileConsensus(BaseEstimator, ClusterMixin, ABC):
                 cluster_assignments[i][j] = int(line[1])
 
             uc = np.unique(cluster_assignments[i])
-            if (np.sort(uc) != np.arange(self.n_clusters)).any():
-                raise ValueError(
-                    "Input clusterers must have cluster labels in the range "
-                    "0 to  n_clusters - 1."
-                )
+            clusters = np.arange(self.n_clusters)
+            for c in uc:
+                if c not in clusters:
+                    raise ValueError(
+                        "Input clusterers must have cluster labels in the range "
+                        "0 to  n_clusters - 1."
+                    )
         return cluster_assignments
 
     def fit(self, X, y=None):
