@@ -114,8 +114,36 @@ other_clusterers = [
     "dummyclusterer-sklearn",
 ]
 vector_clusterers = [
-    ["kmeans", "kmeans-sklearn"],
+    "kmeans-sklearn",
+    "kmeans",
+    "pam",
+    "kmedoids",
+    "clarans",
+    "clara",
     "dbscan",
+]
+
+feature_clustering = [
+    "catch22-kmedoids"
+    "catch22-pam",
+    "catch22-clarans",
+    "catch22-clara",
+    "catch22-kmeans",
+    "tsfresh-kmedoids",
+    "tsfresh-pam",
+    "tsfresh-clarans",
+    "tsfresh-clara",
+    "tsfresh-kmeans",
+    "catch22-kmedoids",
+    "catch22-pam",
+    "catch22-clarans",
+    "catch22-clara",
+    "catch22-kmeans",
+    "summary-clusterer-kmedoids",
+    "summary-clusterer-pam",
+    "summary-clusterer-clarans",
+    "summary-clusterer-clara",
+    "summary-clusterer-kmeans",
 ]
 
 
@@ -183,8 +211,49 @@ def get_clusterer_by_name(
         return _set_clusterer_vector(
             c, random_state, n_jobs, fit_contract, checkpoint, kwargs
         )
+    elif str_in_nested_list(feature_clustering, c):
+        return _set_clusterer_feature_based(
+            c, random_state, n_jobs, fit_contract, checkpoint, kwargs
+        )
     else:
         raise ValueError(f"UNKNOWN CLUSTERER: {c} in set_clusterer")
+
+
+def _set_clusterer_feature_based(
+    c: str,
+    random_state,
+    n_jobs,
+    fit_contract,
+    checkpoint,
+    data_vars,
+    row_normalise,
+    kwargs,
+):
+    models_with_base_clusterer = ["catch22", "tsfresh", "summary-clusterer"]
+    base_model_clusterer = ["kmeans", "kmedoids", "pam", "clarans", "clara"]
+    # feature_clustering = [
+    #     "catch22-kmedoids"
+    #     "catch22-pam",
+    #     "catch22-clarans",
+    #     "catch22-clara",
+    #     "catch22-kmeans",
+    #     "tsfresh-kmedoids",
+    #     "tsfresh-pam",
+    #     "tsfresh-clarans",
+    #     "tsfresh-clara",
+    #     "tsfresh-kmeans",
+    #     "catch22-kmedoids",
+    #     "catch22-pam",
+    #     "catch22-clarans",
+    #     "catch22-clara",
+    #     "catch22-kmeans",
+    #     "summary-clusterer-kmedoids",
+    #     "summary-clusterer-pam",
+    #     "summary-clusterer-clarans",
+    #     "summary-clusterer-clara",
+    #     "summary-clusterer-kmeans",
+    # ]
+    pass
 
 
 def _set_clusterer_distance_based(
