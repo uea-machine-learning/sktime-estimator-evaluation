@@ -14,6 +14,8 @@ from sklearn.cluster import KMeans
 
 from tsml_eval.utils.datasets import load_experiment_data
 from tsml_eval.utils.functions import str_in_nested_list
+from aeon.utils.validation._dependencies import _check_soft_dependencies
+from aeon.clustering.feature_based import Catch22Clusterer, TSFreshClusterer, SummaryClusterer
 
 distance_based_clusterers = [
     "kmeans-euclidean",
@@ -116,6 +118,7 @@ other_clusterers = [
 vector_clusterers = [
     "kmeans-sklearn",
     "kmeans",
+    "faster-pam",
     "pam",
     "kmedoids",
     "clarans",
@@ -139,11 +142,24 @@ feature_clustering = [
     "catch22-clarans",
     "catch22-clara",
     "catch22-kmeans",
-    "summary-clusterer-kmedoids",
-    "summary-clusterer-pam",
-    "summary-clusterer-clarans",
-    "summary-clusterer-clara",
-    "summary-clusterer-kmeans",
+    "summary-kmedoids",
+    "summary-pam",
+    "summary-clarans",
+    "summary-clara",
+    "summary-kmeans",
+]
+
+dim_reduction = [
+    "pca-kmedoids",
+    "pca-pam",
+    "pca-claran",
+    "pca-clara",
+    "pca-kmeans",
+    "umap-kmedoids",
+    "umap-pam",
+    "umap-clarans",
+    "umap-clara",
+    "umap-kmeans"
 ]
 
 
@@ -225,35 +241,17 @@ def _set_clusterer_feature_based(
     n_jobs,
     fit_contract,
     checkpoint,
-    data_vars,
-    row_normalise,
     kwargs,
 ):
-    models_with_base_clusterer = ["catch22", "tsfresh", "summary-clusterer"]
-    base_model_clusterer = ["kmeans", "kmedoids", "pam", "clarans", "clara"]
-    # feature_clustering = [
-    #     "catch22-kmedoids"
-    #     "catch22-pam",
-    #     "catch22-clarans",
-    #     "catch22-clara",
-    #     "catch22-kmeans",
-    #     "tsfresh-kmedoids",
-    #     "tsfresh-pam",
-    #     "tsfresh-clarans",
-    #     "tsfresh-clara",
-    #     "tsfresh-kmeans",
-    #     "catch22-kmedoids",
-    #     "catch22-pam",
-    #     "catch22-clarans",
-    #     "catch22-clara",
-    #     "catch22-kmeans",
-    #     "summary-clusterer-kmedoids",
-    #     "summary-clusterer-pam",
-    #     "summary-clusterer-clarans",
-    #     "summary-clusterer-clara",
-    #     "summary-clusterer-kmeans",
-    # ]
-    pass
+    feature_str = c.split("-")[0]
+    clusterer = _set_clusterer_vector(c.split("-")[1], random_state, n_jobs, fit_contract, checkpoint, kwargs)
+
+    if feature_str == "catch22":
+        return Catch22Clusterer(estimator=clusterer, **kwargs)
+    elif feature_str == "tsfresh":
+        return TSFreshClusterer(estimator=clusterer, **kwargs)
+    elif feature_str == "summary":
+        return SummaryClusterer(estimator=clusterer, **kwargs)
 
 
 def _set_clusterer_distance_based(
@@ -446,3 +444,16 @@ def _set_clusterer_vector(c, random_state, n_jobs, fit_contract, checkpoint, kwa
         from sklearn.cluster import DBSCAN
 
         return DBSCAN(n_jobs=n_jobs, **kwargs)
+
+    elif c == "pam" or c == "alternate" or c == "fasterpam" or c == "clara" or c == "clarans" or c == "kmedoids":
+        _check_soft_dependencies("kmedoids")
+        from tsml_eval.estimators.clustering._vector_kmedoids import VectorKmedoids
+        return VectorKmedoids(
+            n_clusters=8,
+            metric="euclidean",
+            method=c,
+            init="random",
+            max_iter=50,
+            random_state=random_state,
+            **kwargs,
+        )

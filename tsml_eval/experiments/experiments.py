@@ -826,7 +826,10 @@ def run_clustering_experiment(
             if n_clusters == -1:
                 n_clusters = n_classes
 
-            if isinstance(clusterer, SklearnToTsmlClusterer):
+            # This is meant to check when clusterer is a pipeline e.g. catch22, tsfresh
+            if hasattr(clusterer, "estimator") and hasattr(clusterer.estimator, "n_clusters"):
+                clusterer.estimator.set_params(n_clusters=n_clusters)
+            elif isinstance(clusterer, SklearnToTsmlClusterer):
                 clusterer.set_params(clusterer__n_clusters=n_clusters)
             else:
                 clusterer.set_params(n_clusters=n_clusters)
