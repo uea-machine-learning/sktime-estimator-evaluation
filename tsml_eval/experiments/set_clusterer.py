@@ -118,7 +118,7 @@ other_clusterers = [
 vector_clusterers = [
     "kmeans-sklearn",
     "kmeans",
-    "faster-pam",
+    "fasterpam",
     "pam",
     "kmedoids",
     "clarans",
@@ -249,7 +249,7 @@ def _set_clusterer_feature_based(
     if feature_str == "catch22":
         return Catch22Clusterer(estimator=clusterer, **kwargs)
     elif feature_str == "tsfresh":
-        return TSFreshClusterer(estimator=clusterer, **kwargs)
+        return TSFreshClusterer(estimator=clusterer, relevant_feature_extractor=False, **kwargs)
     elif feature_str == "summary":
         return SummaryClusterer(estimator=clusterer, **kwargs)
 

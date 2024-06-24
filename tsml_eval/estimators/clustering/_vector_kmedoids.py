@@ -1,3 +1,4 @@
+import pandas as pd
 from aeon.utils.validation._dependencies import _check_soft_dependencies
 import numpy as np
 
@@ -29,6 +30,16 @@ class VectorKmedoids(KMedoids):
             max_iter=max_iter,
             random_state=random_state,
         )
+
+    def fit(self, X, y=None):
+        if isinstance(X, pd.DataFrame):
+            X = X.values
+        super().fit(X)
+
+    def predict(self, X) -> np.ndarray:
+        if isinstance(X, pd.DataFrame):
+            X = X.values
+        return super().predict(X)
 
     def predict_proba(self, X) -> np.ndarray:
         """Predicts labels probabilities for sequences in X.
