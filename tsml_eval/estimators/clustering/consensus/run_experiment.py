@@ -12,6 +12,7 @@ from tsml_eval.estimators.clustering.consensus import (
     MCLAFromFile,
     HBGFFromFile,
     NMFFromFile,
+    ElasticEnsembleClustererFromFile
 )
 import queue
 
@@ -47,6 +48,8 @@ def _get_model(ensemble_model_name: str, clusterers: list[str]):
         return HBGFFromFile(clusterers=clusterers, random_state=0)
     elif "nmf" in ensemble_model_name:
         return NMFFromFile(clusterers=clusterers, random_state=0)
+    elif "elastic-ensemble" in ensemble_model_name:
+        return ElasticEnsembleClustererFromFile(clusterers=clusterers, random_state=0)
     else:
         raise ValueError(f"Unknown ensemble model: {ensemble_model_name}")
 
@@ -246,6 +249,7 @@ if __name__ == "__main__":
         # "mcla",
         # "hbgf",
         # "nmf",
+        "elastic-ensemble"
     ]
 
     # Name of various configurations. So pam-all I use when clustering_result_dir_name

@@ -10,6 +10,7 @@ __all__ = [
     "MCLAFromFile",
     "HBGFFromFile",
     "NMFFromFile",
+    "ElasticEnsembleClustererFromFile",
 ]
 
 from tsml_eval.estimators.clustering.consensus.ivc import IterativeVotingClustering
@@ -27,3 +28,4 @@ from tsml_eval.estimators.clustering.consensus.cluster_ensemble_package import (
     HBGFFromFile,
     NMFFromFile,
 )
+from tsml_eval.estimators.clustering.consensus.elastic_ensemble import ElasticEnsembleClustererFromFile
