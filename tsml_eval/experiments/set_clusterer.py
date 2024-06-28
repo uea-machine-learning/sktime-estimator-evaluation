@@ -9,13 +9,18 @@ from aeon.clustering import (
     TimeSeriesKMeans,
     TimeSeriesKMedoids,
 )
+from aeon.clustering.feature_based import (
+    Catch22Clusterer,
+    SummaryClusterer,
+    TSFreshClusterer,
+)
 from aeon.transformations.collection import TimeSeriesScaler
+from aeon.utils.validation._dependencies import _check_soft_dependencies
 from sklearn.cluster import KMeans
 
+from tsml_eval.estimators.clustering import RClustering
 from tsml_eval.utils.datasets import load_experiment_data
 from tsml_eval.utils.functions import str_in_nested_list
-from aeon.utils.validation._dependencies import _check_soft_dependencies
-from aeon.clustering.feature_based import Catch22Clusterer, TSFreshClusterer, SummaryClusterer
 
 distance_based_clusterers = [
     "kmeans-euclidean",
@@ -127,8 +132,7 @@ vector_clusterers = [
 ]
 
 feature_clustering = [
-    "catch22-kmedoids"
-    "catch22-pam",
+    "catch22-kmedoids" "catch22-pam",
     "catch22-clarans",
     "catch22-clara",
     "catch22-kmeans",
@@ -147,6 +151,11 @@ feature_clustering = [
     "summary-clarans",
     "summary-clara",
     "summary-kmeans",
+    "rclustering-kmeans",
+    "rclustering-kmedoids",
+    "rclustering-pam",
+    "rclustering-clarans",
+    "rclustering-clara",
 ]
 
 dim_reduction = [
@@ -159,7 +168,7 @@ dim_reduction = [
     "umap-pam",
     "umap-clarans",
     "umap-clara",
-    "umap-kmeans"
+    "umap-kmeans",
 ]
 
 
@@ -244,14 +253,33 @@ def _set_clusterer_feature_based(
     kwargs,
 ):
     feature_str = c.split("-")[0]
-    clusterer = _set_clusterer_vector(c.split("-")[1], random_state, n_jobs, fit_contract, checkpoint, kwargs)
+    clusterer = _set_clusterer_vector(
+        c.split("-")[1], random_state, n_jobs, fit_contract, checkpoint, kwargs
+    )
 
     if feature_str == "catch22":
-        return Catch22Clusterer(estimator=clusterer, **kwargs)
+        return Catch22Clusterer(
+            estimator=clusterer, random_state=random_state, **kwargs
+        )
     elif feature_str == "tsfresh":
-        return TSFreshClusterer(estimator=clusterer, relevant_feature_extractor=False, **kwargs)
+        return TSFreshClusterer(
+            estimator=clusterer,
+            relevant_feature_extractor=False,
+            random_state=random_state**kwargs,
+        )
     elif feature_str == "summary":
-        return SummaryClusterer(estimator=clusterer, **kwargs)
+        return SummaryClusterer(
+            estimator=clusterer, random_state=random_state, **kwargs
+        )
+    elif feature_str == "rclustering":
+        return RClustering(
+            # Suggested in the original paper
+            num_features=500,
+            max_dilations_per_kernel=32,
+            estimator=clusterer,
+            random_state=random_state,
+            **kwargs,
+        )
 
 
 def _set_clusterer_distance_based(
@@ -445,9 +473,17 @@ def _set_clusterer_vector(c, random_state, n_jobs, fit_contract, checkpoint, kwa
 
         return DBSCAN(n_jobs=n_jobs, **kwargs)
 
-    elif c == "pam" or c == "alternate" or c == "fasterpam" or c == "clara" or c == "clarans" or c == "kmedoids":
+    elif (
+        c == "pam"
+        or c == "alternate"
+        or c == "fasterpam"
+        or c == "clara"
+        or c == "clarans"
+        or c == "kmedoids"
+    ):
         _check_soft_dependencies("kmedoids")
         from tsml_eval.estimators.clustering._vector_kmedoids import VectorKmedoids
+
         return VectorKmedoids(
             n_clusters=8,
             metric="euclidean",

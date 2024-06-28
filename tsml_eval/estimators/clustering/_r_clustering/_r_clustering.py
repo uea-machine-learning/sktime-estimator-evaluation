@@ -28,7 +28,6 @@ class RClustering(BaseClusterer):
 
     def __init__(
         self,
-        n_clusters: int = 8,
         num_features: int = 500,
         max_dilations_per_kernel: int = 32,
         estimator=None,
@@ -43,7 +42,7 @@ class RClustering(BaseClusterer):
 
         self.labels_ = None
 
-        super().__init__(n_clusters=n_clusters)
+        super().__init__()
 
     def _fit(self, X, y=None):
         self._transformer = RClusteringTransformer(
@@ -52,11 +51,7 @@ class RClustering(BaseClusterer):
         )
 
         self._estimator = _clone_estimator(
-            (
-                KMeans(n_clusters=self.n_clusters, n_init=10)
-                if self.estimator is None
-                else self.estimator
-            ),
+            (KMeans() if self.estimator is None else self.estimator),
             self.random_state,
         )
 
