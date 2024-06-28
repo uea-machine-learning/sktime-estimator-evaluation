@@ -48,10 +48,15 @@ class RClustering(BaseClusterer):
         self._transformer = RClusteringTransformer(
             num_features=self.num_features,
             max_dilations_per_kernel=self.max_dilations_per_kernel,
+            random_state=self.random_state,
         )
 
         self._estimator = _clone_estimator(
-            (KMeans() if self.estimator is None else self.estimator),
+            (
+                KMeans(random_state=self.random_state)
+                if self.estimator is None
+                else self.estimator
+            ),
             self.random_state,
         )
 
