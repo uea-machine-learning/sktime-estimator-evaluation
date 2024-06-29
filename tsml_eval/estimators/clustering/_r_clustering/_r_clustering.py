@@ -1,6 +1,6 @@
-"""Catch22 Clusterer.
+"""R-clustering Clusterer.
 
-Pipeline clusterer using the Catch22 transformer and an estimator.
+Pipeline clusterer using the R-clustering transformer and an estimator.
 """
 
 __maintainer__ = ["chrisholder"]
@@ -53,7 +53,7 @@ class RClustering(BaseClusterer):
 
         self._estimator = _clone_estimator(
             (
-                KMeans(random_state=self.random_state)
+                KMeans(random_state=self.random_state, n_init=10)
                 if self.estimator is None
                 else self.estimator
             ),

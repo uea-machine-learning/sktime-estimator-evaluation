@@ -1,4 +1,4 @@
-"""MiniRocket transformer.
+"""MiniRocket transformer for r-clustering.
 
 Code adapted from:
 https://github.com/jorgemarcoes/R-Clustering/blob/main/R_Clustering_on_UCR_Archive.ipynb
