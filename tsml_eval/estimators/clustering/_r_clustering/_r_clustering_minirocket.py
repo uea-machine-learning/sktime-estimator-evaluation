@@ -74,7 +74,7 @@ class RClusteringTransformer(BaseCollectionTransformer):
             sc = StandardScaler()
             X_std = sc.fit_transform(X_)
 
-            pca = PCA().fit(X_std)
+            pca = PCA(random_state=self.random_state).fit(X_std)
             optimal_dimensions = np.argmax(pca.explained_variance_ratio_ < 0.01)
             pca_optimal = PCA(n_components=optimal_dimensions)
             X_t = pca_optimal.fit_transform(X_std)
