@@ -101,17 +101,13 @@ class USSL(BaseClusterer):
         self.cluster_centers_ = W_star
         self.learned_shapelets_ = S_star
 
-    # def _predict(self, X, y=None) -> np.ndarray:
-    #     raise NotImplementedError("This method is not implemented")
     def _predict(self, X, y=None) -> np.ndarray:
+        # I made this predict up I have no idea if it's intended
         segment_matrix = self._initiliasation_s(X)
         distance_matrix, _ = self._distance_timeseries_shapelet(X, segment_matrix)
         _, distance_matrix_to_centres = self._ussl_kmeans_assign(distance_matrix, self.cluster_centers_)
         GY_tp1 = distance_matrix_to_centres
 
-        X_tp1, _ = self._distance_timeseries_shapelet(X, self.learned_shapelets_)  # update X_tp1
-        L_G_tp1, _ = self.spectral_timeseries_similarity(X_tp1)  # update L_G_tp1
-        GY_tp1 = self.update_GY(self.cluster_centers_, X_tp1, GY_tp1, L_G_tp1)
         mY, nY = GY_tp1.shape
         Y_star = np.zeros(nY, dtype=int)
         for j in range(nY):
@@ -350,7 +346,8 @@ if __name__ == "__main__":
     from aeon.datasets import load_from_tsfile
     from sklearn.metrics import rand_score
     DATA_PATH = "/home/chris/Documents/Univariate_ts"
-    DATASET = "ArrowHead"
+    DATASET = "ACSF1"
+    COMBINE = True
     train_path = f"{DATA_PATH}/{DATASET}/{DATASET}_TRAIN.ts"
     test_path = f"{DATA_PATH}/{DATASET}/{DATASET}_TEST.ts"
 
@@ -365,18 +362,23 @@ if __name__ == "__main__":
     X_train = scaler.fit_transform(X_train)
     X_test = scaler.transform(X_test)
 
-    # X_train = np.vstack((X_train, X_test))
-    # y_train = np.hstack((y_train, y_test))
+    if COMBINE:
+        X_train = np.vstack((X_train, X_test))
+        y_train = np.hstack((y_train, y_test))
     n_clusters = np.unique(y_train).shape[0]
     print(f"Number of clusters: {n_clusters}")
     clusterer = USSL(random_state=1, n_clusters=n_clusters)
     clusterer.fit(X_train)
     temp = clusterer.labels_
     train_score = rand_score(y_train, clusterer.labels_)
-    predictions = clusterer.predict(X_test)
-    test_score = rand_score(y_test, predictions)
-
-    print(f"Train score: {train_score}")
-    print(f"Test score: {test_score}")
     print(f"Train Labels: {temp}")
-    print(f"Test Labels: {predictions}")
+    print(f"Train score: {train_score}")
+
+    if COMBINE:
+        predictions = clusterer.predict(X_test)
+        test_score = rand_score(y_test, predictions)
+        print(f"Test Labels: {predictions}")
+        print(f"Test score: {test_score}")
+
+
+
