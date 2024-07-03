@@ -156,6 +156,9 @@ feature_clustering = [
     "rclustering-pam",
     "rclustering-clarans",
     "rclustering-clara",
+    "rclustering-no-pca-kmeans",
+    "rclustering-no-pca-kmedoids",
+    "rclustering-no-pca-pam",
 ]
 
 dim_reduction = [
@@ -254,7 +257,7 @@ def _set_clusterer_feature_based(
 ):
     feature_str = c.split("-")[0]
     clusterer = _set_clusterer_vector(
-        c.split("-")[1], random_state, n_jobs, fit_contract, checkpoint, kwargs
+        c.split("-")[-1], random_state, n_jobs, fit_contract, checkpoint, kwargs
     )
 
     if feature_str == "catch22":
@@ -272,9 +275,11 @@ def _set_clusterer_feature_based(
             estimator=clusterer, random_state=random_state, **kwargs
         )
     elif feature_str == "rclustering":
+        pca_result = "no-pca" not in c
         return RClustering(
             # Suggested in the original paper
             num_features=500,
+            pca_result=pca_result,
             max_dilations_per_kernel=32,
             estimator=clusterer,
             random_state=random_state,
