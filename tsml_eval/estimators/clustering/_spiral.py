@@ -1,15 +1,14 @@
 import numpy as np
-from sklearn.utils.random import check_random_state
-from aeon.transformations.collection.base import BaseCollectionTransformer
 from aeon.distances import distance
-
+from aeon.transformations.collection.base import BaseCollectionTransformer
+from sklearn.utils.random import check_random_state
 
 """
 NOTE to future:
 
-So I have it basically all developed upto line 160: 
+So I have it basically all developed upto line 160:
     X = exactCDmex(nA, nR, nO, X0, lenA, d, fro_norm, 20)
-    
+
 For this function im had to try convert the matlab c code but it's super weird.
 
 I have equality on the first iteration (residue) but subsequent iterations are not equal.
@@ -53,17 +52,19 @@ class SPIRAL(BaseCollectionTransformer):
         """
         Generates the kernel matrix.
 
-        Parameters:
+        Parameters
+        ----------
             X (list of np.array): Input time series data.
             n (int): Number of users.
             m (int): Number of pairs to generate.
 
-        Returns:
+        Returns
+        -------
             D (dict): Kernel matrix.
             Omega (dict): Indices matrix.
             d (np.array): Index array.
         """
-        print('Step 1: sample and calculate dtw distance...')
+        print("Step 1: sample and calculate dtw distance...")
 
         D = {}
         Omega = {}
@@ -81,9 +82,9 @@ class SPIRAL(BaseCollectionTransformer):
         id_mask = idi < idj
 
         idi = idi[id_mask]
-        idi = idi[:(m - n) // 2]
+        idi = idi[: (m - n) // 2]
         idj = idj[id_mask]
-        idj = idj[:(m - n) // 2]
+        idj = idj[: (m - n) // 2]
 
         idi = idi - 1
         idj = idj - 1
@@ -94,7 +95,7 @@ class SPIRAL(BaseCollectionTransformer):
         for i in range(n):
             # They have this using dtw in original but the best path will always be
             # the diagonal so we can just use euclidean
-            nrm[i] = distance(X[i], np.zeros((1, length)), metric='euclidean')
+            nrm[i] = distance(X[i], np.zeros((1, length)), metric="euclidean")
 
         # np.save('/home/chris/projects/clustering-algo-clones/SPIRAL/nrm.npy', nrm)
         # Should probably move this out and numba this loop
@@ -105,7 +106,7 @@ class SPIRAL(BaseCollectionTransformer):
         #                        2 * nrm[i] * nrm[j])
         # np.save('/home/chris/projects/clustering-algo-clones/SPIRAL/v.npy', v)
         # Load the precomputed values
-        v = np.load('/home/chris/projects/clustering-algo-clones/SPIRAL/v.npy')
+        v = np.load("/home/chris/projects/clustering-algo-clones/SPIRAL/v.npy")
 
         col = np.concatenate((idi, idj, np.arange(0, n)))
         row = np.concatenate((idj, idi, np.arange(0, n)))
@@ -134,7 +135,7 @@ class SPIRAL(BaseCollectionTransformer):
 
 
 def matrix_completion_sparse(A, d, Omega, X0):
-    print('Step 2: matrix factorization...')
+    print("Step 2: matrix factorization...")
     n = len(A)
     lenA = np.zeros(n, dtype=int)
 
@@ -147,21 +148,21 @@ def matrix_completion_sparse(A, d, Omega, X0):
     nO = np.zeros((n, m), dtype=int)
 
     for i in range(n):
-        nA[i, :len(A[i])] = A[i]
-        nO[i, 0:len(Omega[i])] = Omega[i] - 1
+        nA[i, : len(A[i])] = A[i]
+        nO[i, 0 : len(Omega[i])] = Omega[i] - 1
 
     d = d - 1
     nR = nA
     k = X0.shape[1]
 
-    fro_norm = np.linalg.norm(nA, 'fro')
+    fro_norm = np.linalg.norm(nA, "fro")
 
-    np.save('/home/chris/projects/clustering-algo-clones/SPIRAL/nA.npy', nA)
-    np.save('/home/chris/projects/clustering-algo-clones/SPIRAL/nR.npy', nR)
-    np.save('/home/chris/projects/clustering-algo-clones/SPIRAL/nO.npy', nO)
-    np.save('/home/chris/projects/clustering-algo-clones/SPIRAL/X0.npy', X0)
-    np.save('/home/chris/projects/clustering-algo-clones/SPIRAL/lenA.npy', lenA)
-    np.save('/home/chris/projects/clustering-algo-clones/SPIRAL/d.npy', d)
+    np.save("/home/chris/projects/clustering-algo-clones/SPIRAL/nA.npy", nA)
+    np.save("/home/chris/projects/clustering-algo-clones/SPIRAL/nR.npy", nR)
+    np.save("/home/chris/projects/clustering-algo-clones/SPIRAL/nO.npy", nO)
+    np.save("/home/chris/projects/clustering-algo-clones/SPIRAL/X0.npy", X0)
+    np.save("/home/chris/projects/clustering-algo-clones/SPIRAL/lenA.npy", lenA)
+    np.save("/home/chris/projects/clustering-algo-clones/SPIRAL/d.npy", d)
 
     X = exactCDmex(nA, nR, nO, X0, lenA, d, fro_norm, 20)
     return X.reshape(X0.shape)
@@ -177,13 +178,14 @@ def cubic_root(d):
     else:
         return np.cbrt(d)
 
+
 @njit(cache=True)
 def root_c(a, b, verbose=False):
     if verbose:
         print("+++++++++++++++++++++")
         print(f"Input to root_c: a={a}, b={b}")
-    a3 = 4 * (a ** 3)
-    b2 = 27 * (b ** 2)
+    a3 = 4 * (a**3)
+    b2 = 27 * (b**2)
     delta = a3 + b2
     if delta <= 0:
         if verbose:
@@ -198,7 +200,7 @@ def root_c(a, b, verbose=False):
         for k in range(0, 5, 2):
             # x = r3 * np.cos(th3 + (k * np.pi / 3))
             x = r3 * np.cos(th3 + (k * 3.14159265 / 3))
-            y = (x ** 4) / 4 + a * (x ** 2) / 2 + b * x
+            y = (x**4) / 4 + a * (x**2) / 2 + b * x
             if y < ymax:
                 ymax = y
                 xopt = x
@@ -276,22 +278,23 @@ def exactCDmex(nA, nR, nO, X0, lenA, d, normA, max_iters):
     X0 = X0.flatten(order="F")
     d = d.flatten(order="F")
     nA = nA.flatten(order="F")
-    X, res = iterations(nA, nR, nO, X0, nA_shape[0], nA_shape[1], X0_shape[1], lenA,
-                        max_iters,
-                        normA, d)
+    X, res = iterations(
+        nA, nR, nO, X0, nA_shape[0], nA_shape[1], X0_shape[1], lenA, max_iters, normA, d
+    )
 
     # for val in printMe:
     #     print(f"# {val[0]}: i={val[1]}, t={val[2]}, j={val[3]}, nR[j*n+t]={val[4]}")
 
     for i in range(max_iters):
-        print(f'# {i}: residue={res[i]}')
+        print(f"# {i}: residue={res[i]}")
 
     temp_res = X.reshape(X0_shape)
     return X
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import os
+
     from aeon.datasets import load_from_tsfile as load_data
 
     DATASETS_PATH = "/home/chris/Documents/Univariate_ts"
@@ -311,6 +314,7 @@ if __name__ == '__main__':
 
     from sklearn.cluster import KMeans
     from sklearn.metrics import rand_score
+
     n_clusters = np.unique(y_train).shape[0]
 
     kmeans = KMeans(n_clusters=n_clusters, random_state=0)
@@ -319,7 +323,5 @@ if __name__ == '__main__':
 
     print(f"Train Rand Score: {rand_score(X_labels, train_labels)}")
     # print(f"Test Rand Score: {rand_score(y_test, test_labels)}")
-
-
 
     stop = ""
