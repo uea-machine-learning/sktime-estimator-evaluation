@@ -124,6 +124,21 @@ vector_clusterers = [
     "dbscan",
 ]
 
+experimental_clusterers = [
+    "faster-ssg-adtw",
+    "faster-ssg-dtw",
+    "faster-ssg-msm",
+    "faster-ssg-twe",
+    "window-ssg-adtw",
+    "window-ssg-dtw",
+    "window-ssg-msm",
+    "window-ssg-twe",
+    "faster-window-ssg-adtw",
+    "faster-window-ssg-dtw",
+    "faster-window-ssg-msm",
+    "faster-window-ssg-twe",
+]
+
 
 def get_clusterer_by_name(
     clusterer_name,
@@ -193,8 +208,74 @@ def get_clusterer_by_name(
         return _set_clusterer_vector(
             c, random_state, n_jobs, fit_contract, checkpoint, kwargs
         )
+    elif str_in_nested_list(experimental_clusterers, c):
+        return _set_experimental_clusterer(
+            c,
+            random_state,
+            n_jobs,
+            fit_contract,
+            checkpoint,
+            data_vars,
+            row_normalise,
+            kwargs,
+        )
     else:
         raise ValueError(f"UNKNOWN CLUSTERER: {c} in set_clusterer")
+
+
+def _set_experimental_clusterer(
+    c,
+    random_state,
+    n_jobs,
+    fit_contract,
+    checkpoint,
+    data_vars,
+    row_normalise,
+    kwargs,
+):
+    # experimental_clusterers = [
+    #     "faster-ssg-adtw",
+    #     "faster-ssg-dtw",
+    #     "faster-ssg-msm",
+    #     "faster-ssg-twe",
+    #     "window-ssg-adtw",
+    #     "window-ssg-dtw",
+    #     "window-ssg-msm",
+    #     "window-ssg-twe",
+    #     "faster-window-ssg-adtw",
+    #     "faster-window-ssg-dtw",
+    #     "faster-window-ssg-msm",
+    #     "faster-window-ssg-twe",
+    # ]
+    distance = c.split("-")[-1]
+    distance_params = _get_distance_default_params(distance, data_vars, row_normalise)
+
+    if "window" in c:
+        distance_params = {**distance_params, "window": 0.2}
+    average_params = {"distance": distance, **distance_params.copy()}
+
+    if "faster" in c:
+        average_params = {
+            **average_params,
+            "method": "holdit",
+        }
+    else:
+        average_params = {
+            **average_params,
+            "method": "subgradient",
+        }
+
+    return TimeSeriesKMeans(
+        max_iter=50,
+        n_init=10,
+        init_algorithm="random",
+        distance=distance,
+        distance_params=distance_params,
+        random_state=random_state,
+        averaging_method="ba",
+        average_params=average_params,
+        **kwargs,
+    )
 
 
 def _set_clusterer_distance_based(
