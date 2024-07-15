@@ -106,8 +106,9 @@ def run_experiment(args):
         # Do not include paths to your local directories here in PRs
         # If threading is required, see the threaded version of this file
         data_path = _TEST_DATA_PATH
+        # data_path = "/home/chris/Documents/Univariate_ts"
         results_path = _CLUSTERER_RESULTS_PATH
-        estimator_name = "window-ssg-adtw"
+        estimator_name = "30-faster-ssg-adtw"
         dataset_name = "MinimalChinatown"
         row_normalise = False
         n_clusters = -1

@@ -137,6 +137,22 @@ experimental_clusterers = [
     "faster-window-ssg-dtw",
     "faster-window-ssg-msm",
     "faster-window-ssg-twe",
+    "40-faster-ssg-adtw",
+    "40-faster-ssg-dtw",
+    "40-faster-ssg-msm",
+    "40-faster-ssg-twe",
+    "30-faster-ssg-adtw",
+    "30-faster-ssg-dtw",
+    "30-faster-ssg-msm",
+    "30-faster-ssg-twe",
+    "20-faster-ssg-adtw",
+    "20-faster-ssg-dtw",
+    "20-faster-ssg-msm",
+    "20-faster-ssg-twe",
+    "10-faster-ssg-adtw",
+    "10-faster-ssg-dtw",
+    "10-faster-ssg-msm",
+    "10-faster-ssg-twe",
 ]
 
 
@@ -263,6 +279,14 @@ def _set_experimental_clusterer(
         average_params = {
             **average_params,
             "method": "subgradient",
+        }
+
+    potential_size_arg = ["40", "30", "20", "10"]
+    if any(arg in c for arg in potential_size_arg):
+        size = int(c.split("-")[0])
+        average_params = {
+            **average_params,
+            "holdit_num_ts_to_use_percentage": size / 100,
         }
 
     return TimeSeriesKMeans(
