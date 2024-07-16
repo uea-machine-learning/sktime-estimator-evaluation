@@ -153,6 +153,16 @@ experimental_clusterers = [
     "10-faster-ssg-dtw",
     "10-faster-ssg-msm",
     "10-faster-ssg-twe",
+    # New ones
+    "proper-stopping-ssg-adtw",
+    "proper-stopping-ssg-msm",
+    "proper-stopping-ssg-twe",
+    "approx-stopping-ssg-adtw",
+    "approx-stopping-ssg-msm",
+    "approx-stopping-ssg-twe",
+    "avg-change-stopping-ssg-adtw",
+    "avg-change-stopping-ssg-msm",
+    "avg-change-stopping-ssg-twe",
 ]
 
 
@@ -275,13 +285,25 @@ def _set_experimental_clusterer(
             **average_params,
             "method": "holdit",
         }
+    elif "proper-stopping" in c:
+        average_params = {**average_params, "method": "holdit_stopping"}
+    elif "approx-stopping" in c:
+        average_params = {
+            **average_params,
+            "method": "holdit_stopping_approx",
+        }
+    elif "avg-change-stopping" in c:
+        average_params = {
+            **average_params,
+            "method": "holdit_stopping_avg_change",
+        }
     else:
         average_params = {
             **average_params,
             "method": "subgradient",
         }
 
-    potential_size_arg = ["40", "30", "20", "10"]
+    potential_size_arg = ["50", "40", "30", "20", "10"]
     if any(arg in c for arg in potential_size_arg):
         size = int(c.split("-")[0])
         average_params = {
@@ -298,6 +320,7 @@ def _set_experimental_clusterer(
         random_state=random_state,
         averaging_method="ba",
         average_params=average_params,
+        verbose=True,
         **kwargs,
     )
 

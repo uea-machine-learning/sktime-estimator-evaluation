@@ -108,7 +108,9 @@ def run_experiment(args):
         data_path = _TEST_DATA_PATH
         # data_path = "/home/chris/Documents/Univariate_ts"
         results_path = _CLUSTERER_RESULTS_PATH
-        estimator_name = "30-faster-ssg-adtw"
+        estimator_name = "proper-stopping-ssg-adtw"
+        # estimator_name = "approx-stopping-ssg-adtw"
+        # estimator_name = "avg-change-stopping-ssg-adtw"
         dataset_name = "MinimalChinatown"
         row_normalise = False
         n_clusters = -1
