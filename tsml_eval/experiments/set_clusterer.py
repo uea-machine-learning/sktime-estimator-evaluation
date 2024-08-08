@@ -9,10 +9,11 @@ from aeon.clustering import (
     TimeSeriesKMeans,
     TimeSeriesKMedoids,
 )
+from aeon.distances._distance import DISTANCES_DICT
 from aeon.transformations.collection import TimeSeriesScaler
 from sklearn.cluster import KMeans
 
-from tsml_eval.estimators.clustering import KSpectralCentroid
+from tsml_eval.estimators.clustering import ElasticSOM, KSpectralCentroid
 from tsml_eval.utils.datasets import load_experiment_data
 from tsml_eval.utils.functions import str_in_nested_list
 
@@ -110,6 +111,18 @@ distance_based_clusterers = [
     "timeserieskmedoids",
     "timeseriesclarans",
     "timeseriesclara",
+    "elasticsom",
+    "som-euclidean",
+    "som-squared",
+    "som-adtw",
+    "som-dtw",
+    "som-ddtw",
+    "som-wdtw",
+    "som-wddtw",
+    "som-erp",
+    "som-msm",
+    "som-twe",
+    "som-shape_dtw",
 ]
 
 feature_based_clusterers = [
@@ -349,6 +362,9 @@ def _set_clusterer_distance_based(
     else:
         distance = c.split("-")[-1]
 
+    if distance not in DISTANCES_DICT:
+        distance = "dtw"
+
     if "distance_params" in kwargs:
         distance_params = kwargs["distance_params"]
     else:
@@ -437,6 +453,15 @@ def _set_clusterer_distance_based(
         return TimeSeriesCLARA(
             max_iter=50,
             init_algorithm=init_algorithm,
+            distance=distance,
+            distance_params=distance_params,
+            random_state=random_state,
+            **kwargs,
+        )
+    elif "som" in c:
+        return ElasticSOM(
+            sigma=1.0,
+            learning_rate=0.5,
             distance=distance,
             distance_params=distance_params,
             random_state=random_state,

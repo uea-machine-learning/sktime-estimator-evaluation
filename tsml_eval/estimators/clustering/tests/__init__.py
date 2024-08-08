@@ -1,1 +1,1 @@
-"""Tests clusterer."""
+"""Test clusterer."""
