@@ -27,7 +27,7 @@ class ElasticSOM(BaseClusterer):
         custom_lr_decay_function: Union[Callable, None] = None,
         custom_sigma_decay_function: Union[Callable, None] = None,
         custom_neighborhood_function: Union[Callable, None] = None,
-        num_iterations=100,
+        num_iterations=50,
         distance_params=None,
         random_state=None,
         verbose=False,
@@ -80,21 +80,27 @@ class ElasticSOM(BaseClusterer):
         best_path, distance = self._alignment_path_callable(
             x, y, **self._distance_params
         )
-        s1 = x.swapaxes(0, 1)
-        s2 = y.swapaxes(0, 1)
+
         x_cords = []
         y_cords = []
         for i in best_path:
             x_cords += [round(i[0] * w + i[1] * (1 - w))]
-            y_cords += [s1[i[0]] * w + s2[i[1]] * (1 - w)]
-        s3 = []
-        for j in range(len(s1)):
-            sublistj = [y_cords[k] for k in np.where(np.isin(np.array(x_cords), j))[0]]
-            if len(sublistj) != 0:
-                s3 += [sum(sublistj) / len(sublistj)]
-            else:
-                s3 += [s3[-1]]
-        return np.array(s3).swapaxes(0, 1)
+            y_cords += [x[:, i[0]] * w + y[:, i[1]] * (1 - w)]
+
+        s3 = np.zeros_like(x)
+        counts = np.zeros(x.shape[1])
+
+        for j in range(x.shape[1]):
+            indices = np.where(np.array(x_cords) == j)[0]
+            if len(indices) > 0:
+                s3[:, j] = np.mean([y_cords[k] for k in indices], axis=0)
+                counts[j] = len(indices)
+
+        for j in range(1, x.shape[1]):
+            if counts[j] == 0:
+                s3[:, j] = s3[:, j - 1]
+
+        return s3
 
     def update(self, x, win, t, max_iteration):
         eta = self._learning_rate_decay_function(self.learning_rate, t, max_iteration)
@@ -105,7 +111,6 @@ class ElasticSOM(BaseClusterer):
             it = np.nditer(g, flags=["multi_index"])
 
             while not it.finished:
-                # This needs optimising I do a load of axis swapping in these functions
                 temp = self._weights[it.multi_index].reshape(1, -1)
                 self._weights[it.multi_index] = self._elastic_update(
                     x, temp, g[it.multi_index]
