@@ -89,6 +89,9 @@ docs = [
     "jupyter",
     "furo",
 ]
+clustering = [
+    "pymetis",
+]
 
 [project.urls]
 homepage = "https://www.timeseriesclassification.com/"
