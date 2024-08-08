@@ -10,6 +10,7 @@ from sklearn.utils.random import check_random_state
 # Alignment path part adapted from https://github.com/Kenan-Li/dtwsom/tree/master
 
 
+# Numbers of iterations is multiplied by the number of timepoints
 class ElasticSOM(BaseClusterer):
     _tags = {
         "X_inner_type": ["np-list", "numpy3D"],
@@ -26,7 +27,7 @@ class ElasticSOM(BaseClusterer):
         custom_lr_decay_function: Union[Callable, None] = None,
         custom_sigma_decay_function: Union[Callable, None] = None,
         custom_neighborhood_function: Union[Callable, None] = None,
-        num_iterations=30,
+        num_iterations=100,
         distance_params=None,
         random_state=None,
     ):
@@ -52,6 +53,7 @@ class ElasticSOM(BaseClusterer):
         self._distance_params: Dict = {}
 
         self.labels_ = None
+        self.cluster_centers_ = None
         super().__init__(n_clusters=n_clusters)
 
     @staticmethod
@@ -76,19 +78,21 @@ class ElasticSOM(BaseClusterer):
         best_path, distance = self._alignment_path_callable(
             x, y, **self._distance_params
         )
+        s1 = x.swapaxes(0, 1)
+        s2 = y.swapaxes(0, 1)
         x_cords = []
         y_cords = []
         for i in best_path:
             x_cords += [round(i[0] * w + i[1] * (1 - w))]
-            y_cords += [x[:, i[0]] * w + y[:, i[1]] * (1 - w)]
+            y_cords += [s1[i[0]] * w + s2[i[1]] * (1 - w)]
         s3 = []
-        for j in range(len(x)):
+        for j in range(len(s1)):
             sublistj = [y_cords[k] for k in np.where(np.isin(np.array(x_cords), j))[0]]
             if len(sublistj) != 0:
                 s3 += [sum(sublistj) / len(sublistj)]
             else:
                 s3 += [s3[-1]]
-        return s3
+        return np.array(s3).swapaxes(0, 1)
 
     def update(self, x, win, t, max_iteration):
         eta = self._learning_rate_decay_function(self.learning_rate, t, max_iteration)
@@ -99,10 +103,11 @@ class ElasticSOM(BaseClusterer):
             it = np.nditer(g, flags=["multi_index"])
 
             while not it.finished:
+                # This needs optimising I do a load of axis swapping in these functions
                 temp = self._weights[it.multi_index].reshape(1, -1)
                 self._weights[it.multi_index] = self._elastic_update(
                     x, temp, g[it.multi_index]
-                )[0]
+                )
                 it.iternext()
         else:
             self._weights += np.einsum("ij, ijk->ijk", g, x - self._weights)
@@ -113,14 +118,21 @@ class ElasticSOM(BaseClusterer):
 
     def _fit(self, X, y=None):
         self._check_params(X)
-        iterations = np.arange(self.num_iterations) % len(X)
+        num_iterations = self.num_iterations * X.shape[-1]
+        iterations = np.arange(num_iterations) % len(X)
+        # Randomise the iterations
+        self._random_state.shuffle(iterations)
+
         for t, iteration in enumerate(iterations):
             decay_rate = int(t)
             self.update(
-                X[iteration], self.winner(X[iteration]), decay_rate, self.num_iterations
+                X[iteration], self.winner(X[iteration]), decay_rate, num_iterations
             )
         winner_coordinates = np.array([self.winner(x) for x in X]).T
         self.labels_ = np.ravel_multi_index(winner_coordinates, (1, self.n_clusters))
+        self.cluster_centers_ = self._weights.reshape(
+            self.n_clusters, X.shape[1], X.shape[2]
+        )
 
     def _check_params(self, X):
         self._random_state = check_random_state(self.random_state)

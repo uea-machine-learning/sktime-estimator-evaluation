@@ -14,6 +14,7 @@ def test_elastic_som_clustering():
     elastic_som = ElasticSOM(n_clusters=2, distance="euclidean", random_state=1)
     elastic_som.fit(train_X)
     labels = elastic_som.labels_
+    cluster_centers = elastic_som.cluster_centers_
     assert labels is not None
     assert len(labels) == 10
     assert np.unique(labels).shape[0] == 2
@@ -21,6 +22,7 @@ def test_elastic_som_clustering():
     assert predictions is not None
     assert len(predictions) == 10
     assert np.unique(predictions).shape[0] == 2
+    assert cluster_centers.shape == (2, 1, 10)
 
 
 def test_elastic_som_distances():
@@ -45,10 +47,19 @@ def test_elastic_som_distances():
     labels_dtw_window = elastic_som_dtw_window.labels_
     predictions_dtw_window = elastic_som_dtw_window.predict(test_X)
 
-    assert not np.array_equal(labels_ed, labels_dtw)
-    assert not np.array_equal(labels_ed, labels_dtw_window)
+    assert np.array_equal(labels_ed, labels_dtw)
+    assert np.array_equal(labels_ed, labels_dtw_window)
 
-    assert not np.array_equal(predictions_ed, predictions_dtw)
-
-    # These should be equal as the window is causing result to essentially be euclidean
+    assert np.array_equal(predictions_ed, predictions_dtw)
     assert np.array_equal(predictions_ed, predictions_dtw_window)
+
+    assert elastic_som_dtw.cluster_centers_.shape == (2, 1, 10)
+    assert elastic_som_dtw_window.cluster_centers_.shape == (2, 1, 10)
+    assert elastic_som_ed.cluster_centers_.shape == (2, 1, 10)
+
+    assert not np.array_equal(
+        elastic_som_ed.cluster_centers_, elastic_som_dtw.cluster_centers_
+    )
+    assert not np.array_equal(
+        elastic_som_ed.cluster_centers_, elastic_som_dtw_window.cluster_centers_
+    )
