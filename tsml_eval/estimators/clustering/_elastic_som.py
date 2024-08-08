@@ -30,6 +30,7 @@ class ElasticSOM(BaseClusterer):
         num_iterations=100,
         distance_params=None,
         random_state=None,
+        verbose=False,
     ):
         self.sigma = sigma
         self.learning_rate = learning_rate
@@ -40,6 +41,7 @@ class ElasticSOM(BaseClusterer):
         self.num_iterations = num_iterations
         self.random_state = random_state
         self.distance_params = distance_params
+        self.verbose = verbose
 
         self._random_state = None
         self._weights = None
@@ -124,6 +126,8 @@ class ElasticSOM(BaseClusterer):
         self._random_state.shuffle(iterations)
 
         for t, iteration in enumerate(iterations):
+            if self.verbose:
+                print(f"Iteration {t}/{num_iterations}")  # noqa: T001, T201
             decay_rate = int(t)
             self.update(
                 X[iteration], self.winner(X[iteration]), decay_rate, num_iterations
