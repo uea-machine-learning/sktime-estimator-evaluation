@@ -1,7 +1,7 @@
 """Test elastic som."""
 
 import numpy as np
-from aeon.testing.utils.data_gen import make_example_3d_numpy
+from aeon.testing.data_generation import make_example_3d_numpy
 
 from tsml_eval.estimators.clustering import ElasticSOM
 

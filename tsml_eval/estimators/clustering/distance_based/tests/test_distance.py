@@ -1,13 +1,15 @@
+"""Test distance based clusterers."""
+
 import numpy as np
 import pytest
-from aeon.testing.utils.data_gen import make_example_3d_numpy
 from aeon.distances import pairwise_distance
+from aeon.testing.data_generation import make_example_3d_numpy
 
 from tsml_eval.estimators.clustering import (
+    TimeSeriesAgglomerative,
     TimeSeriesDBScan,
     TimeSeriesHDBScan,
-    TimeSeriesAgglomerative,
-    TimeSeriesOPTICS
+    TimeSeriesOPTICS,
 )
 
 n_cases = 20
@@ -24,9 +26,7 @@ def _run_distance_test(clusterer, distance, **kwargs):
     precomputed = pairwise_distance(X, metric=distance)
 
     precomputed_model = clusterer(
-        **kwargs,
-        distance=distance,
-        precomputed_distances=precomputed
+        **kwargs, distance=distance, precomputed_distances=precomputed
     ).fit(X)
     assert precomputed_model.labels_.shape[0] == n_cases
     assert np.array_equal(model.labels_, precomputed_model.labels_)
@@ -55,6 +55,7 @@ def _run_distance_test(clusterer, distance, **kwargs):
     ],
 )
 def test_dbscan(distance):
+    """Test DBScan clusterer."""
     _run_distance_test(TimeSeriesDBScan, distance)
 
 
@@ -76,6 +77,7 @@ def test_dbscan(distance):
     ],
 )
 def test_hdbscan(distance):
+    """Test HDBScan clusterer."""
     _run_distance_test(TimeSeriesHDBScan, distance)
 
 
@@ -97,6 +99,7 @@ def test_hdbscan(distance):
     ],
 )
 def test_agglomerative(distance):
+    """Test Agglomerative clusterer."""
     _run_distance_test(TimeSeriesAgglomerative, distance)
 
     X = make_example_3d_numpy(n_cases, n_channels, n_timepoints, return_y=False)
@@ -125,4 +128,5 @@ def test_agglomerative(distance):
     ],
 )
 def test_optics(distance):
+    """Test OPTICS clusterer."""
     _run_distance_test(TimeSeriesOPTICS, distance)
