@@ -13,7 +13,13 @@ from aeon.distances._distance import DISTANCES_DICT
 from aeon.transformations.collection import TimeSeriesScaler
 from sklearn.cluster import KMeans
 
-from tsml_eval.estimators.clustering import ElasticSOM, KSpectralCentroid
+from tsml_eval.estimators.clustering import (
+    ElasticSOM,
+    KSpectralCentroid,
+    TimeSeriesAgglomerative,
+    TimeSeriesDBScan,
+    TimeSeriesHDBScan,
+)
 from tsml_eval.utils.datasets import load_experiment_data
 from tsml_eval.utils.functions import str_in_nested_list
 
@@ -21,6 +27,7 @@ distance_based_clusterers = [
     "kspectralcentroid",
     "ksc",
     "kspectral-centroid",
+    # ================================= K-Means ===================================
     "kmeans-euclidean",
     "kmeans-squared",
     "kmeans-dtw",
@@ -34,6 +41,8 @@ distance_based_clusterers = [
     "kmeans-msm",
     "kmeans-adtw",
     "kmeans-shape_dtw",
+    # ================================= K-Means ===================================
+    # ================================ K-Medoids ==================================
     "kmedoids-euclidean",
     "kmedoids-squared",
     "kmedoids-dtw",
@@ -47,6 +56,8 @@ distance_based_clusterers = [
     "kmedoids-msm",
     "kmedoids-adtw",
     "kmedoids-shape_dtw",
+    # ================================ K-Medoids ==================================
+    # ================================= CLARANS ===================================
     "clarans-euclidean",
     "clarans-squared",
     "clarans-dtw",
@@ -60,6 +71,8 @@ distance_based_clusterers = [
     "clarans-msm",
     "clarans-adtw",
     "clarans-shape_dtw",
+    # ================================= CLARANS ===================================
+    # ================================== CLARA ====================================
     "clara-euclidean",
     "clara-squared",
     "clara-dtw",
@@ -73,6 +86,8 @@ distance_based_clusterers = [
     "clara-msm",
     "clara-adtw",
     "clara-shape_dtw",
+    # ================================== CLARA ====================================
+    # ===================================== PAM ====================================
     "pam-euclidean",
     "pam-squared",
     "pam-dtw",
@@ -86,6 +101,8 @@ distance_based_clusterers = [
     "pam-msm",
     "pam-adtw",
     "pam-shape_dtw",
+    # ===================================== PAM ====================================
+    # ===================================== BA =====================================
     "kmeans-ba-dtw",
     "kmeans-ba-ddtw",
     "kmeans-ba-wdtw",
@@ -97,6 +114,8 @@ distance_based_clusterers = [
     "kmeans-ba-msm",
     "kmeans-ba-adtw",
     "kmeans-ba-shape_dtw",
+    # ===================================== BA =====================================
+    # ================================== SSG-BA ====================================
     "kmeans-ssg-ba-dtw",
     "kmeans-ssg-ba-ddtw",
     "kmeans-ssg-ba-wdtw",
@@ -107,11 +126,68 @@ distance_based_clusterers = [
     "kmeans-ssg-ba-msm",
     "kmeans-ssg-ba-adtw",
     "kmeans-ssg-ba-shape_dtw",
-    "timeserieskmeans",
-    "timeserieskmedoids",
-    "timeseriesclarans",
-    "timeseriesclara",
-    "elasticsom",
+    # ================================== SSG-BA ====================================
+    # =================================== DBSCAN ===================================
+    "DBSCAN-euclidean",
+    "DBSCAN-squared",
+    "DBSCAN-dtw",
+    "DBSCAN-ddtw",
+    "DBSCAN-wdtw",
+    "DBSCAN-wddtw",
+    "DBSCAN-lcss",
+    "DBSCAN-erp",
+    "DBSCAN-edr",
+    "DBSCAN-twe",
+    "DBSCAN-msm",
+    "DBSCAN-adtw",
+    "DBSCAN-shape_dtw",
+    # =================================== DBSCAN ===================================
+    # =================================== HDBSCAN ==================================
+    "HDBSCAN-euclidean",
+    "HDBSCAN-squared",
+    "HDBSCAN-dtw",
+    "HDBSCAN-ddtw",
+    "HDBSCAN-wdtw",
+    "HDBSCAN-wddtw",
+    "HDBSCAN-lcss",
+    "HDBSCAN-erp",
+    "HDBSCAN-edr",
+    "HDBSCAN-twe",
+    "HDBSCAN-msm",
+    "HDBSCAN-adtw",
+    "HDBSCAN-shape_dtw",
+    # =================================== HDBSCAN ==================================
+    # ================================ Agglomerative ===============================
+    "agglomerative-euclidean",
+    "agglomerative-squared",
+    "agglomerative-dtw",
+    "agglomerative-ddtw",
+    "agglomerative-wdtw",
+    "agglomerative-wddtw",
+    "agglomerative-lcss",
+    "agglomerative-erp",
+    "agglomerative-edr",
+    "agglomerative-twe",
+    "agglomerative-msm",
+    "agglomerative-adtw",
+    "agglomerative-shape_dtw",
+    # ================================ Agglomerative ===============================
+    # =================================== OPTICS ===================================
+    "OPTICS-euclidean",
+    "OPTICS-squared",
+    "OPTICS-dtw",
+    "OPTICS-ddtw",
+    "OPTICS-wdtw",
+    "OPTICS-wddtw",
+    "OPTICS-lcss",
+    "OPTICS-erp",
+    "OPTICS-edr",
+    "OPTICS-twe",
+    "OPTICS-msm",
+    "OPTICS-adtw",
+    "OPTICS-shape_dtw",
+    # =================================== OPTICS ===================================
+    # =================================== SOM ===================================
     "som-euclidean",
     "som-squared",
     "som-adtw",
@@ -123,6 +199,14 @@ distance_based_clusterers = [
     "som-msm",
     "som-twe",
     "som-shape_dtw",
+    # =================================== SOM ===================================
+    # ================================ GENERIC NAMES ================================
+    "timeserieskmeans",
+    "timeserieskmedoids",
+    "timeseriesclarans",
+    "timeseriesclara",
+    "elasticsom",
+    # ================================ GENERIC NAMES ================================
 ]
 
 feature_based_clusterers = [
@@ -372,6 +456,11 @@ def _set_clusterer_distance_based(
             distance, data_vars, row_normalise
         )
 
+    if "precomputed_distance_path" in kwargs:
+        precomputed_distances = np.load(kwargs["precomputed_distance_path"])
+    else:
+        precomputed_distances = None
+
     if "kmeans" in c or "timeserieskmeans" in c:
         if "average_params" in kwargs:
             average_params = kwargs["average_params"]
@@ -456,6 +545,48 @@ def _set_clusterer_distance_based(
             distance=distance,
             distance_params=distance_params,
             random_state=random_state,
+            **kwargs,
+        )
+    elif "HDBSCAN" in c or "timeserieshdbscan" in c:
+        return TimeSeriesHDBScan(
+            min_cluster_size=5,
+            min_samples=None,
+            cluster_selection_epsilon=0.0,
+            max_cluster_size=None,
+            distance=distance,
+            distance_params=distance_params,
+            precomputed_distances=precomputed_distances,
+            alpha=1.0,
+            algorithm="auto",
+            leaf_size=40,
+            cluster_selection_method="eom",
+            allow_single_cluster=False,
+            store_centers=None,
+            copy=False,
+            **kwargs,
+        )
+    elif "DBSCAN" in c or "timeseriesdbscan" in c:
+        return TimeSeriesDBScan(
+            eps=0.5,
+            min_samples=5,
+            distance=distance,
+            distance_params=distance_params,
+            precomputed_distances=precomputed_distances,
+            algorithm="auto",
+            leaf_size=30,
+            **kwargs,
+        )
+    elif "agglomerative" in c or "timeseriesagglomerative" in c:
+        return TimeSeriesAgglomerative(
+            distance=distance,
+            distance_params=distance_params,
+            precomputed_distances=precomputed_distances,
+            memory=None,
+            connectivity=None,
+            compute_full_tree="auto",
+            linkage="ward",
+            distance_threshold=None,
+            compute_distances=False,
             **kwargs,
         )
     elif "som" in c:
