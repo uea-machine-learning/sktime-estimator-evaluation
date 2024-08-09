@@ -233,7 +233,7 @@ class TimeSeriesOPTICS(BaseClusterer):
         return self.labels_
 
     def _predict(self, X, y=None) -> np.ndarray:
-        raise RuntimeError("DBSCAN does not support predict method")
+        raise RuntimeError("OPTICS does not support predict method")
 
     def _score(self, X, y=None):
         return 0.0
