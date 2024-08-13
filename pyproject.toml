@@ -91,6 +91,7 @@ docs = [
 ]
 clustering = [
     "pymetis",
+    "tslearn",
 ]
 
 [project.urls]

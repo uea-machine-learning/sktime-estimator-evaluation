@@ -8,6 +8,7 @@ from aeon.clustering import (
     TimeSeriesCLARANS,
     TimeSeriesKMeans,
     TimeSeriesKMedoids,
+    TimeSeriesKShapes,
 )
 from aeon.distances._distance import DISTANCES_DICT
 from aeon.transformations.collection import TimeSeriesScaler
@@ -24,9 +25,14 @@ from tsml_eval.utils.datasets import load_experiment_data
 from tsml_eval.utils.functions import str_in_nested_list
 
 distance_based_clusterers = [
+    # ================================= K-Shapes ===================================
+    "kshapes",
+    # ================================= K-Shapes ===================================
+    # ================================ KSC ===================================
     "kspectralcentroid",
     "ksc",
     "kspectral-centroid",
+    # ================================ KSC ===================================
     # ================================= K-Means ===================================
     "kmeans-euclidean",
     "kmeans-squared",
@@ -206,6 +212,7 @@ distance_based_clusterers = [
     "timeseriesclarans",
     "timeseriesclara",
     "elasticsom",
+    "timeserieskshapes",
     # ================================ GENERIC NAMES ================================
 ]
 
@@ -604,6 +611,15 @@ def _set_clusterer_distance_based(
             max_shift=None,
             max_iter=50,
             init_algorithm=init_algorithm,
+            random_state=random_state,
+            **kwargs,
+        )
+    elif "kshapes" in c or "timeserieskshapes" in c:
+        return TimeSeriesKShapes(
+            init_algorithm=init_algorithm,
+            max_iter=50,
+            n_init=10,
+            tol=1e-06,
             random_state=random_state,
             **kwargs,
         )
