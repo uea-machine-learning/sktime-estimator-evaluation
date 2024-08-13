@@ -1380,7 +1380,7 @@ def _figures_for_statistic(
             )
 
             scatter, _ = plot_pairwise_scatter(
-                scores[:, i], scores[:, n], est1, est2, metric=""
+                scores[:, i], scores[:, n], est1, est2, metric=statistic_name.upper()
             )
             scatter.savefig(
                 f"{save_path}/{statistic_name}/figures/scatters/{est1}/"
