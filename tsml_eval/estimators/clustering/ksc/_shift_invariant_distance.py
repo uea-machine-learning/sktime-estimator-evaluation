@@ -100,7 +100,12 @@ def _shift_invariant_pairwise_distance(
 
 @njit(cache=True, fastmath=True)
 def scale_d(x: np.ndarray, y: np.ndarray) -> float:
-    alpha = np.dot(x, y) / np.dot(y, y)
+    denominator = np.dot(y, y)
+
+    if denominator == 0:
+        return np.inf
+
+    alpha = np.dot(x, y) / denominator
 
     dist = np.linalg.norm(x - alpha * y) / np.linalg.norm(x)
 
