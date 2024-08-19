@@ -98,49 +98,80 @@ def _shift_invariant_pairwise_distance(
     return distances
 
 
-# Constant which cant be computed during numba compilation but can be passed as global
-SMALLEST_FLOAT = np.finfo(float).eps
-
-
 @njit(cache=True, fastmath=True)
-def _scale_distance(x, y, n_instances):
-    numerator = 0.0
-    denominator = 0.0
-    for i in range(n_instances):
-        numerator += x[i] * y[i]
-        denominator += y[i] * y[i]
-    denominator += SMALLEST_FLOAT
-    alpha = numerator / denominator
+def scale_d(x: np.ndarray, y: np.ndarray) -> float:
+    alpha = np.dot(x, y) / np.dot(y, y)
 
-    # Calculate the distance using a raw loop
-    sum_diff_squared = 0.0
-    sum_x_squared = 0.0
-    for i in range(n_instances):
-        diff = x[i] - y[i] * alpha
-        sum_diff_squared += diff * diff
-        sum_x_squared += x[i] * x[i]
-    return np.sqrt(sum_diff_squared) / (np.sqrt(sum_x_squared) + SMALLEST_FLOAT)
+    dist = np.linalg.norm(x - alpha * y) / np.linalg.norm(x)
+
+    return dist
 
 
 @njit(cache=True, fastmath=True)
 def _univariate_shift_invariant_distance(
     x: np.ndarray, y: np.ndarray, max_shift: int
 ) -> Tuple[float, np.ndarray]:
-    n_timepoints = min(len(x), len(y))
-    min_dist = _scale_distance(x, y, n_timepoints)
-    best_shift = y
+    min_dist = scale_d(x, y)
+    best_shifted_y = y
+
     for sh in range(-max_shift, max_shift + 1):
         if sh == 0:
-            continue
+            shifted_y = y
         elif sh < 0:
+            # Shift left
             shifted_y = np.append(y[-sh:], np.zeros(-sh))
         else:
+            # Shift right
             shifted_y = np.append(np.zeros(sh), y[:-sh])
 
-        dist = _scale_distance(x, shifted_y, n_timepoints)
+        dist = scale_d(x, shifted_y)
 
         if dist < min_dist:
             min_dist = dist
-            best_shift = shifted_y
+            best_shifted_y = shifted_y
 
-    return min_dist, best_shift
+    return min_dist, best_shifted_y
+
+
+# @njit(cache=True, fastmath=True)
+# def _scale_distance(x, y, n_instances):
+#     numerator = 0.0
+#     denominator = 0.0
+#     for i in range(n_instances):
+#         numerator += x[i] * y[i]
+#         denominator += y[i] * y[i]
+#     denominator += SMALLEST_FLOAT
+#     alpha = numerator / denominator
+#
+#     # Calculate the distance using a raw loop
+#     sum_diff_squared = 0.0
+#     sum_x_squared = 0.0
+#     for i in range(n_instances):
+#         diff = x[i] - y[i] * alpha
+#         sum_diff_squared += diff * diff
+#         sum_x_squared += x[i] * x[i]
+#     return np.sqrt(sum_diff_squared) / (np.sqrt(sum_x_squared) + SMALLEST_FLOAT)
+#
+#
+# @njit(cache=True, fastmath=True)
+# def _univariate_shift_invariant_distance(
+#     x: np.ndarray, y: np.ndarray, max_shift: int
+# ) -> Tuple[float, np.ndarray]:
+#     n_timepoints = min(len(x), len(y))
+#     min_dist = _scale_distance(x, y, n_timepoints)
+#     best_shift = y
+#     for sh in range(-max_shift, max_shift + 1):
+#         if sh == 0:
+#             continue
+#         elif sh < 0:
+#             shifted_y = np.append(y[-sh:], np.zeros(-sh))
+#         else:
+#             shifted_y = np.append(np.zeros(sh), y[:-sh])
+#
+#         dist = _scale_distance(x, shifted_y, n_timepoints)
+#
+#         if dist < min_dist:
+#             min_dist = dist
+#             best_shift = shifted_y
+#
+#     return min_dist, best_shift

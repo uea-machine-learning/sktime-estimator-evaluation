@@ -60,10 +60,10 @@ class KSpectralCentroid(TimeSeriesKMeans):
 
         for i in range(self.max_iter):
             curr_pw = shift_invariant_pairwise_distance(
-                cluster_centres, X, max_shift=self._max_shift
+                X, cluster_centres, max_shift=self._max_shift
             )
-            curr_labels = curr_pw.argmin(axis=0)
-            curr_inertia = curr_pw.min(axis=0).sum()
+            curr_labels = curr_pw.argmin(axis=1)
+            curr_inertia = curr_pw.min(axis=1).sum()
 
             # If an empty cluster is encountered
             if np.unique(curr_labels).size < self.n_clusters:
