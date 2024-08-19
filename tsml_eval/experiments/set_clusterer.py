@@ -415,7 +415,7 @@ def _set_experimental_clusterer(
             return TimeSeriesKMeans(
                 max_iter=50,
                 n_init=1,
-                init_algorithm="old-random",
+                init_algorithm="random_old",
                 distance="squared",
                 random_state=random_state,
                 averaging_method="mean",
@@ -425,7 +425,7 @@ def _set_experimental_clusterer(
             return TimeSeriesKMeans(
                 max_iter=50,
                 n_init=10,
-                init_algorithm="old-random",
+                init_algorithm="random_old",
                 distance="squared",
                 random_state=random_state,
                 averaging_method="mean",
