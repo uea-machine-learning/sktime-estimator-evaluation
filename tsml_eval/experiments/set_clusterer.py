@@ -271,6 +271,12 @@ experimental_clusterers = [
     "avg-change-stopping-ssg-adtw",
     "avg-change-stopping-ssg-msm",
     "avg-change-stopping-ssg-twe",
+    # Initially attempts
+    "greedy-kmeans++",
+    "random-init",
+    "forgy-init",
+    "random-init-10-restarts",
+    "forgy-init-10-restart",
 ]
 
 
@@ -367,20 +373,65 @@ def _set_experimental_clusterer(
     row_normalise,
     kwargs,
 ):
-    # experimental_clusterers = [
-    #     "faster-ssg-adtw",
-    #     "faster-ssg-dtw",
-    #     "faster-ssg-msm",
-    #     "faster-ssg-twe",
-    #     "window-ssg-adtw",
-    #     "window-ssg-dtw",
-    #     "window-ssg-msm",
-    #     "window-ssg-twe",
-    #     "faster-window-ssg-adtw",
-    #     "faster-window-ssg-dtw",
-    #     "faster-window-ssg-msm",
-    #     "faster-window-ssg-twe",
-    # ]
+    init_experiment = [
+        "greedy-kmeans++",
+        "random-init",
+        "forgy-init",
+        "random-init-10-restarts",
+        "forgy-init-10-restart",
+    ]
+    if c in init_experiment:
+        if c == "greedy-kmeans++":
+            return TimeSeriesKMeans(
+                max_iter=50,
+                n_init=1,
+                init_algorithm="kmeans++",
+                distance="squared",
+                random_state=random_state,
+                averaging_method="mean",
+                **kwargs,
+            )
+        elif "forgy-init" == c:
+            return TimeSeriesKMeans(
+                max_iter=50,
+                n_init=1,
+                init_algorithm="random",
+                distance="squared",
+                random_state=random_state,
+                averaging_method="mean",
+                **kwargs,
+            )
+        elif "forgy-init-10-restart" == c:
+            return TimeSeriesKMeans(
+                max_iter=50,
+                n_init=10,
+                init_algorithm="random",
+                distance="squared",
+                random_state=random_state,
+                averaging_method="mean",
+                **kwargs,
+            )
+        elif "random-init" == c:
+            return TimeSeriesKMeans(
+                max_iter=50,
+                n_init=1,
+                init_algorithm="old-random",
+                distance="squared",
+                random_state=random_state,
+                averaging_method="mean",
+                **kwargs,
+            )
+        elif "random-init-10-restarts" == c:
+            return TimeSeriesKMeans(
+                max_iter=50,
+                n_init=10,
+                init_algorithm="old-random",
+                distance="squared",
+                random_state=random_state,
+                averaging_method="mean",
+                **kwargs,
+            )
+
     distance = c.split("-")[-1]
     distance_params = _get_distance_default_params(distance, data_vars, row_normalise)
 
