@@ -276,7 +276,7 @@ experimental_clusterers = [
     "random-init",
     "forgy-init",
     "random-init-10-restarts",
-    "forgy-init-10-restart",
+    "forgy-init-10-restarts",
 ]
 
 
@@ -401,7 +401,7 @@ def _set_experimental_clusterer(
                 averaging_method="mean",
                 **kwargs,
             )
-        elif "forgy-init-10-restart" == c:
+        elif "forgy-init-10-restarts" == c:
             return TimeSeriesKMeans(
                 max_iter=50,
                 n_init=10,
