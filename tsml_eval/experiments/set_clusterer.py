@@ -378,7 +378,7 @@ def _set_experimental_clusterer(
         "random-init",
         "forgy-init",
         "random-init-10-restarts",
-        "forgy-init-10-restart",
+        "forgy-init-10-restarts",
     ]
     if c in init_experiment:
         if c == "greedy-kmeans++":
