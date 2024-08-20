@@ -277,6 +277,7 @@ experimental_clusterers = [
     "forgy-init",
     "random-init-10-restarts",
     "forgy-init-10-restarts",
+    "forgy-init-10-restarts-average-number-iterations",
 ]
 
 
@@ -379,6 +380,7 @@ def _set_experimental_clusterer(
         "forgy-init",
         "random-init-10-restarts",
         "forgy-init-10-restarts",
+        "forgy-init-10-restarts-average-number-iterations",
     ]
     if c in init_experiment:
         if c == "greedy-kmeans++":
@@ -426,6 +428,16 @@ def _set_experimental_clusterer(
                 max_iter=50,
                 n_init=10,
                 init_algorithm="random_old",
+                distance="squared",
+                random_state=random_state,
+                averaging_method="mean",
+                **kwargs,
+            )
+        elif "forgy-init-10-restarts-average-number-iterations" == c:
+            return TimeSeriesKMeans(
+                max_iter=300,
+                n_init=10,
+                init_algorithm="random",
                 distance="squared",
                 random_state=random_state,
                 averaging_method="mean",
