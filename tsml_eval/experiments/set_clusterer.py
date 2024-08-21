@@ -278,6 +278,11 @@ experimental_clusterers = [
     "random-init-10-restarts",
     "forgy-init-10-restarts",
     "forgy-init-10-restarts-average-number-iterations",
+    # Full window dtw runs
+    "k-means-full-window-dtw",
+    "k-means-full-window-ddtw",
+    "k-means-ba-full-window-dtw",
+    "k-means-ba-full-window-ddtw",
 ]
 
 
@@ -444,8 +449,72 @@ def _set_experimental_clusterer(
                 **kwargs,
             )
 
-    distance = c.split("-")[-1]
-    distance_params = _get_distance_default_params(distance, data_vars, row_normalise)
+    if "init_algorithm" in kwargs:
+        init_algorithm = kwargs["init_algorithm"]
+    else:
+        init_algorithm = "random"
+
+    if "distance" in kwargs:
+        distance = kwargs["distance"]
+    else:
+        distance = c.split("-")[-1]
+
+    if distance not in DISTANCES_DICT:
+        distance = "dtw"
+
+    if "distance_params" in kwargs:
+        distance_params = kwargs["distance_params"]
+    else:
+        distance_params = _get_distance_default_params(
+            distance, data_vars, row_normalise
+        )
+    kmeans_full_window = [
+        "k-means-full-window-dtw",
+        "k-means-full-window-ddtw",
+        "k-means-ba-full-window-dtw",
+        "k-means-ba-full-window-ddtw",
+    ]
+    if c in kmeans_full_window:
+
+        if "k-means" in c:
+
+            if "ssg" in c:
+                # Sets to use subgradient BA
+                average_params = {
+                    "method": "subgradient",
+                }
+                return TimeSeriesKMeans(
+                    max_iter=50,
+                    n_init=10,
+                    init_algorithm=init_algorithm,
+                    distance=distance,
+                    distance_params=distance_params,
+                    random_state=random_state,
+                    averaging_method="ba",
+                    average_params=average_params,
+                    **kwargs,
+                )
+            elif "ba" in c:
+                return TimeSeriesKMeans(
+                    max_iter=50,
+                    n_init=10,
+                    init_algorithm=init_algorithm,
+                    distance=distance,
+                    distance_params=distance_params,
+                    random_state=random_state,
+                    averaging_method="ba",
+                    **kwargs,
+                )
+            else:
+                return TimeSeriesKMeans(
+                    max_iter=50,
+                    n_init=10,
+                    init_algorithm=init_algorithm,
+                    distance=distance,
+                    random_state=random_state,
+                    averaging_method="mean",
+                    **kwargs,
+                )
 
     if "window" in c:
         distance_params = {**distance_params, "window": 0.2}
