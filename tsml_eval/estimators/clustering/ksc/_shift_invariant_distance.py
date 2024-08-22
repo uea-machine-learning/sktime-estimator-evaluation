@@ -103,7 +103,7 @@ def scale_d(x: np.ndarray, y: np.ndarray) -> float:
     denominator = np.dot(y, y)
 
     if denominator == 0:
-        return np.inf
+        return np.finfo(np.float64).max
 
     alpha = np.dot(x, y) / denominator
 
