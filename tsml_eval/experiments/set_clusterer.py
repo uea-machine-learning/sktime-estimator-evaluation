@@ -47,6 +47,7 @@ distance_based_clusterers = [
     "kmeans-msm",
     "kmeans-adtw",
     "kmeans-shape_dtw",
+    "kmeans-soft_dtw",
     # ================================= K-Means ===================================
     # ================================ K-Medoids ==================================
     "kmedoids-euclidean",
@@ -62,6 +63,7 @@ distance_based_clusterers = [
     "kmedoids-msm",
     "kmedoids-adtw",
     "kmedoids-shape_dtw",
+    "kmedoids-soft_dtw",
     # ================================ K-Medoids ==================================
     # ================================= CLARANS ===================================
     "clarans-euclidean",
@@ -77,6 +79,7 @@ distance_based_clusterers = [
     "clarans-msm",
     "clarans-adtw",
     "clarans-shape_dtw",
+    "clarans-soft_dtw",
     # ================================= CLARANS ===================================
     # ================================== CLARA ====================================
     "clara-euclidean",
@@ -92,6 +95,7 @@ distance_based_clusterers = [
     "clara-msm",
     "clara-adtw",
     "clara-shape_dtw",
+    "clara-soft_dtw",
     # ================================== CLARA ====================================
     # ===================================== PAM ====================================
     "pam-euclidean",
@@ -107,6 +111,7 @@ distance_based_clusterers = [
     "pam-msm",
     "pam-adtw",
     "pam-shape_dtw",
+    "pam-soft_dtw",
     # ===================================== PAM ====================================
     # ===================================== BA =====================================
     "kmeans-ba-dtw",
@@ -120,6 +125,7 @@ distance_based_clusterers = [
     "kmeans-ba-msm",
     "kmeans-ba-adtw",
     "kmeans-ba-shape_dtw",
+    "kmeans-ba-soft_dtw",
     # ===================================== BA =====================================
     # ================================== SSG-BA ====================================
     "kmeans-ssg-ba-dtw",
@@ -132,7 +138,11 @@ distance_based_clusterers = [
     "kmeans-ssg-ba-msm",
     "kmeans-ssg-ba-adtw",
     "kmeans-ssg-ba-shape_dtw",
+    "kmeans-ssg-ba-soft_dtw",
     # ================================== SSG-BA ====================================
+    # ================================== soft-DBA ====================================
+    "kmeans-dba-soft_dtw",
+    # ================================== soft-DBA ====================================
     # =================================== DBSCAN ===================================
     "DBSCAN-euclidean",
     "DBSCAN-squared",
@@ -205,6 +215,7 @@ distance_based_clusterers = [
     "som-msm",
     "som-twe",
     "som-shape_dtw",
+    "som-soft_dtw",
     # =================================== SOM ===================================
     # ================================ GENERIC NAMES ================================
     "timeserieskmeans",
@@ -468,6 +479,7 @@ def _set_experimental_clusterer(
         distance_params = _get_distance_default_params(
             distance, data_vars, row_normalise
         )
+
     kmeans_full_window = [
         "k-means-full-window-dtw",
         "k-means-full-window-ddtw",
@@ -615,6 +627,22 @@ def _set_clusterer_distance_based(
                 n_init=10,
                 init_algorithm=init_algorithm,
                 distance=distance,
+                distance_params=distance_params,
+                random_state=random_state,
+                averaging_method="ba",
+                average_params=average_params,
+                **kwargs,
+            )
+        elif "dba-soft_dtw" in c:
+            average_params = {
+                **average_params,
+                "method": "soft_dba",
+            }
+            return TimeSeriesKMeans(
+                max_iter=50,
+                n_init=10,
+                init_algorithm=init_algorithm,
+                distance="soft_dtw",
                 distance_params=distance_params,
                 random_state=random_state,
                 averaging_method="ba",

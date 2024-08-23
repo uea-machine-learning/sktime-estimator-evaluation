@@ -108,53 +108,67 @@ def run_experiment(args):
         data_path = _TEST_DATA_PATH
         # data_path = "/home/chris/Documents/Univariate_ts"
         results_path = _CLUSTERER_RESULTS_PATH
+        soft_dtw_tests = [
+            "kmeans-dba-soft_dtw",
+            "kmeans-ba-soft_dtw",
+            "kmeans-ssg-ba-soft_dtw",
+            "kmeans-soft_dtw",
+            "clara-soft_dtw",
+            "pam-soft_dtw",
+            "clarans-soft_dtw",
+            "som-soft_dtw",
+            "kmedoids-soft_dtw",
+        ]
         estimator_name = "k-means-ba-full-window-dtw"
-        # estimator_name = "approx-stopping-ssg-adtw"
-        # estimator_name = "avg-change-stopping-ssg-adtw"
-        dataset_name = "MinimalChinatown"
-        row_normalise = False
-        n_clusters = -1
-        resample_id = 0
-        test_fold = False
-        write_attributes = True
-        att_max_shape = 0
-        benchmark_time = True
-        overwrite = False
-        predefined_resample = False
-        fit_contract = 0
-        checkpoint = None
-        combine_test_train_split = True
-        kwargs = {}
 
-        clusterer = get_clusterer_by_name(
-            estimator_name,
-            random_state=resample_id,
-            n_jobs=1,
-            fit_contract=fit_contract,
-            checkpoint=checkpoint,
-            data_vars=[data_path, dataset_name, resample_id, predefined_resample],
-            row_normalise=row_normalise,
-            **kwargs,
-        )
-        print(f"Local Run of {estimator_name} ({clusterer.__class__.__name__}).")
+        for estimator_name in soft_dtw_tests:
+            print(f"Running {estimator_name}")
+            # estimator_name = "approx-stopping-ssg-adtw"
+            # estimator_name = "avg-change-stopping-ssg-adtw"
+            dataset_name = "MinimalChinatown"
+            row_normalise = False
+            n_clusters = -1
+            resample_id = 0
+            test_fold = False
+            write_attributes = True
+            att_max_shape = 0
+            benchmark_time = True
+            overwrite = False
+            predefined_resample = False
+            fit_contract = 0
+            checkpoint = None
+            combine_test_train_split = True
+            kwargs = {}
 
-        load_and_run_clustering_experiment(
-            data_path,
-            results_path,
-            dataset_name,
-            clusterer,
-            row_normalise=row_normalise,
-            n_clusters=n_clusters,
-            clusterer_name=estimator_name,
-            resample_id=resample_id,
-            build_test_file=test_fold,
-            write_attributes=write_attributes,
-            att_max_shape=att_max_shape,
-            benchmark_time=benchmark_time,
-            overwrite=overwrite,
-            predefined_resample=predefined_resample,
-            combine_train_test_split=combine_test_train_split,
-        )
+            clusterer = get_clusterer_by_name(
+                estimator_name,
+                random_state=resample_id,
+                n_jobs=1,
+                fit_contract=fit_contract,
+                checkpoint=checkpoint,
+                data_vars=[data_path, dataset_name, resample_id, predefined_resample],
+                row_normalise=row_normalise,
+                **kwargs,
+            )
+            print(f"Local Run of {estimator_name} ({clusterer.__class__.__name__}).")
+
+            load_and_run_clustering_experiment(
+                data_path,
+                results_path,
+                dataset_name,
+                clusterer,
+                row_normalise=row_normalise,
+                n_clusters=n_clusters,
+                clusterer_name=estimator_name,
+                resample_id=resample_id,
+                build_test_file=test_fold,
+                write_attributes=write_attributes,
+                att_max_shape=att_max_shape,
+                benchmark_time=benchmark_time,
+                overwrite=overwrite,
+                predefined_resample=predefined_resample,
+                combine_train_test_split=combine_test_train_split,
+            )
 
 
 if __name__ == "__main__":
