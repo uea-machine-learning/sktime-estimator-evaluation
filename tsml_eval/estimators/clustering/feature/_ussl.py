@@ -1,6 +1,7 @@
+from typing import Optional
+
 import numpy as np
 from aeon.clustering.base import BaseClusterer
-from numba import Optional
 from scipy.spatial.distance import euclidean
 from sklearn.utils.validation import check_random_state
 

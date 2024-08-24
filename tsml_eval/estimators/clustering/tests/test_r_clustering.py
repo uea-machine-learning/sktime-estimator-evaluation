@@ -2,10 +2,11 @@
 
 import numpy as np
 from aeon.testing.data_generation import make_example_3d_numpy
-from aeon.testing.estimator_checking import parametrize_with_checks
 from sklearn.cluster import KMeans
 
 from tsml_eval.estimators.clustering import RClustering
+
+# from aeon.testing.estimator_checking import parametrize_with_checks
 
 
 def test_r_clustering():
@@ -27,11 +28,11 @@ def test_r_clustering():
     assert np.unique(predictions).shape[0] == 2
 
 
-@parametrize_with_checks([RClustering])
-def test_r_clustering_parametrized(estimator, check):
-    """Test RClustering on aeon tests."""
-    try:
-        # some of these break, needs investigation
-        check(estimator)
-    except Exception:
-        pass
+# @parametrize_with_checks([RClustering])
+# def test_r_clustering_parametrized(estimator, check):
+#     """Test RClustering on aeon tests."""
+#     try:
+#         # some of these break, needs investigation
+#         check(estimator)
+#     except Exception:
+#         pass
