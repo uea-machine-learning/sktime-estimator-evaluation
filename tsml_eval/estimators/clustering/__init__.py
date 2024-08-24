@@ -9,16 +9,20 @@ __all__ = [
     "TimeSeriesAgglomerative",
     "TimeSeriesHDBScan",
     "TimeSeriesOPTICS",
+    "TimeSeriesDensityPeaks",
+    "USSL",
 ]
 
 
-from tsml_eval.estimators.clustering._elastic_som import ElasticSOM
-from tsml_eval.estimators.clustering._r_clustering import RClustering
 from tsml_eval.estimators.clustering._sklearn_clusterer import SklearnToTsmlClusterer
-from tsml_eval.estimators.clustering.distance_based import (
-    TimeSeriesAgglomerative,
+from tsml_eval.estimators.clustering.density import (
     TimeSeriesDBScan,
-    TimeSeriesHDBScan,
+    TimeSeriesDensityPeaks,
     TimeSeriesOPTICS,
 )
-from tsml_eval.estimators.clustering.ksc._k_spectral_centroid import KSpectralCentroid
+from tsml_eval.estimators.clustering.feature import USSL, RClustering
+from tsml_eval.estimators.clustering.hierarchical import (
+    TimeSeriesAgglomerative,
+    TimeSeriesHDBScan,
+)
+from tsml_eval.estimators.clustering.partition import ElasticSOM, KSpectralCentroid

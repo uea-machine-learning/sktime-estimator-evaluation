@@ -6,10 +6,10 @@ import numpy as np
 from aeon.clustering import TimeSeriesKMeans
 from numpy.random import RandomState
 
-from tsml_eval.estimators.clustering.ksc._shift_invariant_average import (
+from tsml_eval.estimators.clustering.partition.ksc._shift_invariant_average import (
     shift_invariant_average,
 )
-from tsml_eval.estimators.clustering.ksc._shift_invariant_distance import (
+from tsml_eval.estimators.clustering.partition.ksc._shift_invariant_distance import (
     shift_invariant_distance,
     shift_invariant_pairwise_distance,
 )

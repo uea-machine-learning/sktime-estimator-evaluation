@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from tsml_eval.estimators.clustering.ksc._shift_invariant_distance import (
+from tsml_eval.estimators.clustering.partition.ksc._shift_invariant_distance import (
     shift_invariant_best_shift,
 )
 
