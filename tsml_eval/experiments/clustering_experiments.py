@@ -9,6 +9,11 @@ __author__ = ["TonyBagnall", "MatthewMiddlehurst"]
 import os
 import sys
 
+from tsml_eval.experiments.precompute_distances import (
+    PRECOMPUTE_DISTANCE_MODEL_NAME,
+    _precompute_distances,
+)
+
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["NUMEXPR_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["OMP_NUM_THREADS"] = "1"  # must be done before numpy import!!
@@ -53,6 +58,16 @@ def run_experiment(args):
     if args is not None and args.__len__() > 0:
         print("Input args = ", args)
         args = parse_args(args)
+
+        if args.estimator_name in PRECOMPUTE_DISTANCE_MODEL_NAME:
+            return _precompute_distances(
+                args.estimator_name,
+                data_path=args.data_path,
+                results_path=args.results_path,
+                dataset_name=args.dataset_name,
+                row_normalise=args.row_normalise,
+                chunk_idx=args.chunk_idx,
+            )
 
         # this is also checked in load_and_run, but doing a quick check here so can
         # print a message and make sure data is not loaded
@@ -176,4 +191,16 @@ if __name__ == "__main__":
     Example simple usage, with arguments input via script or hard coded for testing.
     """
     print("Running clustering_experiments.py main")
-    run_experiment(sys.argv[1:])
+    args = sys.argv[1:]
+    data_path = args[0]
+    results_path = args[1]
+    estimator_name = args[2]
+    dataset_name = args[3]
+    row_normalise = args[4]
+
+    print(f"Running clustering_experiments.py with args {args}")
+    print(f"Data path = {data_path}")
+    print(f"Results path = {results_path}")
+    print(f"Estimator name = {estimator_name}")
+    print(f"Dataset name = {dataset_name}")
+    print(f"Row normalise = {row_normalise}")
