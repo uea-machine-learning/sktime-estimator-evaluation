@@ -25,4 +25,8 @@ from tsml_eval.estimators.clustering.hierarchical import (
     TimeSeriesAgglomerative,
     TimeSeriesHDBScan,
 )
-from tsml_eval.estimators.clustering.partition import ElasticSOM, KSpectralCentroid
+from tsml_eval.estimators.clustering.partition import (
+    ElasticSOM,
+    KmedoidsPackage,
+    KSpectralCentroid,
+)

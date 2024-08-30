@@ -124,15 +124,9 @@ def run_experiment(args):
         # data_path = "/home/chris/Documents/Univariate_ts"
         results_path = _CLUSTERER_RESULTS_PATH
         soft_dtw_tests = [
-            "kmeans-dba-soft_dtw",
-            "kmeans-ba-soft_dtw",
-            "kmeans-ssg-ba-soft_dtw",
-            "kmeans-soft_dtw",
-            "clara-soft_dtw",
-            "pam-soft_dtw",
-            "clarans-soft_dtw",
-            "som-soft_dtw",
-            "kmedoids-soft_dtw",
+            "pamsil-soft_dtw",
+            "fasterpam-soft_dtw",
+            "pammedsil-soft_dtw",
         ]
         estimator_name = "k-means-ba-full-window-dtw"
 
@@ -191,16 +185,4 @@ if __name__ == "__main__":
     Example simple usage, with arguments input via script or hard coded for testing.
     """
     print("Running clustering_experiments.py main")
-    args = sys.argv[1:]
-    data_path = args[0]
-    results_path = args[1]
-    estimator_name = args[2]
-    dataset_name = args[3]
-    row_normalise = args[4]
-
-    print(f"Running clustering_experiments.py with args {args}")
-    print(f"Data path = {data_path}")
-    print(f"Results path = {results_path}")
-    print(f"Estimator name = {estimator_name}")
-    print(f"Dataset name = {dataset_name}")
-    print(f"Row normalise = {row_normalise}")
+    run_experiment(sys.argv[1:])

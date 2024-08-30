@@ -190,38 +190,43 @@ def _merge_chunks(model_name, *, data_path, results_path, dataset_name, row_norm
 import sys
 
 if __name__ == "__main__":
-    args = sys.argv[1:]
-    print(f"Running precompute_distances.py with args {args}")
+    # args = sys.argv[1:]
+    # print(f"Running precompute_distances.py with args {args}")
     # precompute_distances(sys.argv[1:])
-#     model_name = "msm"
-# for chunk_idx in range(5):
-#     precompute_distances(
-#         model_name,
-#         data_path="/Users/chris/Documents/Phd-data/Datasets/Univariate_ts",
-#         results_path="/Users/chris/Documents/Phd-data/precomputed-distances",
-#         dataset_name="GunPoint",
-#         row_normalise=True,
-#         chunk_idx=chunk_idx,
-#     )
-#
-# merge_chunks(
-#     model_name,
-#     data_path="/Users/chris/Documents/Phd-data/Datasets/Univariate_ts",
-#     results_path="/Users/chris/Documents/Phd-data/precomputed-distances",
-#     dataset_name="GunPoint",
-#     row_normalise=True,
-# )
+    model_name = "msm"
+    # for chunk_idx in range(5):
+    #     _precompute_distances(
+    #         model_name,
+    #         data_path="/Users/chris/Documents/Phd-data/Datasets/Univariate_ts",
+    #         results_path="/Users/chris/Documents/Phd-data/precomputed-distances",
+    #         dataset_name="GunPoint",
+    #         row_normalise=True,
+    #         chunk_idx=chunk_idx,
+    #     )
 
-# full = precompute_distances(
-#     model_name,
-#     data_path="/Users/chris/Documents/Phd-data/Datasets/Univariate_ts",
-#     results_path="/Users/chris/Documents/Phd-data/precomputed-distances/temp",
-#     dataset_name="GunPoint",
-#     row_normalise=True,
-# )
-#
-# loaded = np.load("/Users/chris/Documents/Phd-data/precomputed-distances/normalised/msm/c-1.0/independent-True/GunPoint.npy")
-# shape = loaded.shape
-#
-# equal = np.array_equal(full, loaded)
-# full_shape = full.shape
+    DATA_PATH = "/home/chris/Documents/Univariate_ts"
+    RESULT_PATH = "/home/chris/Documents/ucr-precomputed-matrix"
+    dataset = "ElectricDevices"
+
+    # _merge_chunks(
+    #     model_name,
+    #     data_path=DATA_PATH,
+    #     results_path=RESULT_PATH,
+    #     dataset_name=dataset,
+    #     row_normalise=True,
+    # )
+
+    full = _precompute_distances(
+        model_name,
+        data_path=DATA_PATH,
+        results_path=RESULT_PATH,
+        dataset_name=dataset,
+        row_normalise=True,
+    )
+    print("Distances computed")
+
+    # loaded = np.load("/home/chris/Documents/Phd-data/precomputed-distances/normalised/msm/c-1.0/independent-True/GunPoint.npy")
+    # shape = loaded.shape
+    #
+    # equal = np.array_equal(full, loaded)
+    # full_shape = full.shape

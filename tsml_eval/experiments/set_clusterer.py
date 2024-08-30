@@ -16,6 +16,7 @@ from sklearn.cluster import KMeans
 
 from tsml_eval.estimators.clustering import (
     ElasticSOM,
+    KmedoidsPackage,
     KSpectralCentroid,
     TimeSeriesAgglomerative,
     TimeSeriesDBScan,
@@ -113,6 +114,54 @@ distance_based_clusterers = [
     "pam-shape_dtw",
     "pam-soft_dtw",
     # ===================================== PAM ====================================
+    # ===================================== PAMSIL =================================
+    "pamsil-euclidean",
+    "pamsil-squared",
+    "pamsil-dtw",
+    "pamsil-ddtw",
+    "pamsil-wdtw",
+    "pamsil-wddtw",
+    "pamsil-lcss",
+    "pamsil-erp",
+    "pamsil-edr",
+    "pamsil-twe",
+    "pamsil-msm",
+    "pamsil-adtw",
+    "pamsil-shape_dtw",
+    "pamsil-soft_dtw",
+    # ===================================== PAMSIL =================================
+    # ===================================== PAMMEDSIL ==============================
+    "pammedsil-euclidean",
+    "pammedsil-squared",
+    "pammedsil-dtw",
+    "pammedsil-ddtw",
+    "pammedsil-wdtw",
+    "pammedsil-wddtw",
+    "pammedsil-lcss",
+    "pammedsil-erp",
+    "pammedsil-edr",
+    "pammedsil-twe",
+    "pammedsil-msm",
+    "pammedsil-adtw",
+    "pammedsil-shape_dtw",
+    "pammedsil-soft_dtw",
+    # ===================================== PAMMEDSIL ==============================
+    # ===================================== FasterPAM ==============================
+    "fasterpam-euclidean",
+    "fasterpam-squared",
+    "fasterpam-dtw",
+    "fasterpam-ddtw",
+    "fasterpam-wdtw",
+    "fasterpam-wddtw",
+    "fasterpam-lcss",
+    "fasterpam-erp",
+    "fasterpam-edr",
+    "fasterpam-twe",
+    "fasterpam-msm",
+    "fasterpam-adtw",
+    "fasterpam-shape_dtw",
+    "fasterpam-soft_dtw",
+    # ===================================== FasterPAM ==============================
     # ===================================== BA =====================================
     "kmeans-ba-dtw",
     "kmeans-ba-ddtw",
@@ -681,6 +730,39 @@ def _set_clusterer_distance_based(
             distance_params=distance_params,
             random_state=random_state,
             method="alternate",
+            **kwargs,
+        )
+    elif "pamsil" in c or "timeseriespamsil" in c:
+        return KmedoidsPackage(
+            max_iter=50,
+            n_init=10,
+            init_algorithm=init_algorithm,
+            distance=distance,
+            distance_params=distance_params,
+            random_state=random_state,
+            method="pamsil",
+            **kwargs,
+        )
+    elif "pammedsil" in c or "timeseriespammedsil" in c:
+        return KmedoidsPackage(
+            max_iter=50,
+            n_init=10,
+            init_algorithm=init_algorithm,
+            distance=distance,
+            distance_params=distance_params,
+            random_state=random_state,
+            method="pammedsil",
+            **kwargs,
+        )
+    elif "fasterpam" in c or "timeseriesfasterpam" in c:
+        return KmedoidsPackage(
+            max_iter=50,
+            n_init=10,
+            init_algorithm=init_algorithm,
+            distance=distance,
+            distance_params=distance_params,
+            random_state=random_state,
+            method="fasterpam",
             **kwargs,
         )
     elif "pam" in c or "timeseriespam" in c:
