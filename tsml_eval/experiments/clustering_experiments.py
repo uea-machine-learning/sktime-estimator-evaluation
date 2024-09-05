@@ -126,7 +126,6 @@ def run_experiment(args):
         soft_dtw_tests = [
             "k-means-5-percent-window-dtw",
             "k-means-5-percent-window-ddtw",
-            "k-means-ba-5-percent-window-dtw",
         ]
 
         for estimator_name in soft_dtw_tests:
