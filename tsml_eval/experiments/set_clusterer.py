@@ -343,6 +343,10 @@ experimental_clusterers = [
     "k-means-full-window-ddtw",
     "k-means-ba-full-window-dtw",
     "k-means-ba-full-window-ddtw",
+    # 5% window dtw runs
+    "k-means-5-percent-window-dtw",
+    "k-means-5-percent-window-ddtw",
+    "k-means-ba-5-percent-window-dtw",
 ]
 
 
@@ -570,6 +574,53 @@ def _set_experimental_clusterer(
                     n_init=10,
                     init_algorithm=init_algorithm,
                     distance=distance,
+                    random_state=random_state,
+                    averaging_method="mean",
+                    **kwargs,
+                )
+    kmeans_five_percent_window = [
+        "k-means-5-percent-window-dtw",
+        "k-means-5-percent-window-ddtw",
+        "k-means-ba-5-percent-window-dtw",
+    ]
+    if c in kmeans_five_percent_window:
+
+        if "k-means" in c:
+
+            if "ssg" in c:
+                # Sets to use subgradient BA
+                average_params = {
+                    "method": "subgradient",
+                }
+                return TimeSeriesKMeans(
+                    max_iter=50,
+                    n_init=10,
+                    init_algorithm=init_algorithm,
+                    distance=distance,
+                    distance_params={"window": 0.05},
+                    random_state=random_state,
+                    averaging_method="ba",
+                    average_params=average_params,
+                    **kwargs,
+                )
+            elif "ba" in c:
+                return TimeSeriesKMeans(
+                    max_iter=50,
+                    n_init=10,
+                    init_algorithm=init_algorithm,
+                    distance=distance,
+                    distance_params={"window": 0.05},
+                    random_state=random_state,
+                    averaging_method="ba",
+                    **kwargs,
+                )
+            else:
+                return TimeSeriesKMeans(
+                    max_iter=50,
+                    n_init=10,
+                    init_algorithm=init_algorithm,
+                    distance=distance,
+                    distance_params={"window": 0.05},
                     random_state=random_state,
                     averaging_method="mean",
                     **kwargs,

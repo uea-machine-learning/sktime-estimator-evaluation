@@ -124,11 +124,10 @@ def run_experiment(args):
         # data_path = "/home/chris/Documents/Univariate_ts"
         results_path = _CLUSTERER_RESULTS_PATH
         soft_dtw_tests = [
-            "pamsil-soft_dtw",
-            "fasterpam-soft_dtw",
-            "pammedsil-soft_dtw",
+            "k-means-5-percent-window-dtw",
+            "k-means-5-percent-window-ddtw",
+            "k-means-ba-5-percent-window-dtw",
         ]
-        estimator_name = "k-means-ba-full-window-dtw"
 
         for estimator_name in soft_dtw_tests:
             print(f"Running {estimator_name}")
