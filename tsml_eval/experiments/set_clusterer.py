@@ -10,6 +10,7 @@ from aeon.clustering import (
     TimeSeriesKMedoids,
     TimeSeriesKShapes,
 )
+from aeon.clustering._holdit_k_means import HoldItKmeans
 from aeon.distances._distance import DISTANCES_DICT
 from aeon.transformations.collection import TimeSeriesScaler
 from sklearn.cluster import KMeans
@@ -347,6 +348,16 @@ experimental_clusterers = [
     "k-means-5-percent-window-dtw",
     "k-means-5-percent-window-ddtw",
     "k-means-ba-5-percent-window-dtw",
+    # ssg-clusterer with proper early stopping
+    "kmeans-ssg-forgy-restarts-adtw",
+    "kmeans-ssg-forgy-restarts-msm",
+    "kmeans-ssg-forgy-restarts-twe",
+    "kmeans-ssg-kmeans++-adtw",
+    "kmeans-ssg-kmeans++-msm",
+    "kmeans-ssg-kmeans++-twe",
+    "kmeans-ssg-kmeans++-increase-iterations-adtw",
+    "kmeans-ssg-kmeans++-increase-iterations-msm",
+    "kmeans-ssg-kmeans++-increase-iterations-twe",
 ]
 
 
@@ -443,81 +454,6 @@ def _set_experimental_clusterer(
     row_normalise,
     kwargs,
 ):
-    init_experiment = [
-        "greedy-kmeans++",
-        "random-init",
-        "forgy-init",
-        "random-init-10-restarts",
-        "forgy-init-10-restarts",
-        "forgy-init-10-restarts-average-number-iterations",
-    ]
-    if c in init_experiment:
-        if c == "greedy-kmeans++":
-            return TimeSeriesKMeans(
-                max_iter=50,
-                n_init=1,
-                init_algorithm="kmeans++",
-                distance="squared",
-                random_state=random_state,
-                averaging_method="mean",
-                **kwargs,
-            )
-        elif "forgy-init" == c:
-            return TimeSeriesKMeans(
-                max_iter=50,
-                n_init=1,
-                init_algorithm="random",
-                distance="squared",
-                random_state=random_state,
-                averaging_method="mean",
-                **kwargs,
-            )
-        elif "forgy-init-10-restarts" == c:
-            return TimeSeriesKMeans(
-                max_iter=50,
-                n_init=10,
-                init_algorithm="random",
-                distance="squared",
-                random_state=random_state,
-                averaging_method="mean",
-                **kwargs,
-            )
-        elif "random-init" == c:
-            return TimeSeriesKMeans(
-                max_iter=50,
-                n_init=1,
-                init_algorithm="random_old",
-                distance="squared",
-                random_state=random_state,
-                averaging_method="mean",
-                **kwargs,
-            )
-        elif "random-init-10-restarts" == c:
-            return TimeSeriesKMeans(
-                max_iter=50,
-                n_init=10,
-                init_algorithm="random_old",
-                distance="squared",
-                random_state=random_state,
-                averaging_method="mean",
-                **kwargs,
-            )
-        elif "forgy-init-10-restarts-average-number-iterations" == c:
-            return TimeSeriesKMeans(
-                max_iter=300,
-                n_init=10,
-                init_algorithm="random",
-                distance="squared",
-                random_state=random_state,
-                averaging_method="mean",
-                **kwargs,
-            )
-
-    if "init_algorithm" in kwargs:
-        init_algorithm = kwargs["init_algorithm"]
-    else:
-        init_algorithm = "random"
-
     if "distance" in kwargs:
         distance = kwargs["distance"]
     else:
@@ -533,126 +469,11 @@ def _set_experimental_clusterer(
             distance, data_vars, row_normalise
         )
 
-    kmeans_full_window = [
-        "k-means-full-window-dtw",
-        "k-means-full-window-ddtw",
-        "k-means-ba-full-window-dtw",
-        "k-means-ba-full-window-ddtw",
-    ]
-    if c in kmeans_full_window:
-
-        if "k-means" in c:
-
-            if "ssg" in c:
-                # Sets to use subgradient BA
-                average_params = {
-                    "method": "subgradient",
-                }
-                return TimeSeriesKMeans(
-                    max_iter=50,
-                    n_init=10,
-                    init_algorithm=init_algorithm,
-                    distance=distance,
-                    random_state=random_state,
-                    averaging_method="ba",
-                    average_params=average_params,
-                    **kwargs,
-                )
-            elif "ba" in c:
-                return TimeSeriesKMeans(
-                    max_iter=50,
-                    n_init=10,
-                    init_algorithm=init_algorithm,
-                    distance=distance,
-                    random_state=random_state,
-                    averaging_method="ba",
-                    **kwargs,
-                )
-            else:
-                return TimeSeriesKMeans(
-                    max_iter=50,
-                    n_init=10,
-                    init_algorithm=init_algorithm,
-                    distance=distance,
-                    random_state=random_state,
-                    averaging_method="mean",
-                    **kwargs,
-                )
-    kmeans_five_percent_window = [
-        "k-means-5-percent-window-dtw",
-        "k-means-5-percent-window-ddtw",
-        "k-means-ba-5-percent-window-dtw",
-    ]
-    if c in kmeans_five_percent_window:
-
-        if "k-means" in c:
-
-            if "ssg" in c:
-                # Sets to use subgradient BA
-                average_params = {
-                    "method": "subgradient",
-                }
-                return TimeSeriesKMeans(
-                    max_iter=50,
-                    n_init=10,
-                    init_algorithm=init_algorithm,
-                    distance=distance,
-                    distance_params={"window": 0.05},
-                    random_state=random_state,
-                    averaging_method="ba",
-                    average_params=average_params,
-                    **kwargs,
-                )
-            elif "ba" in c:
-                return TimeSeriesKMeans(
-                    max_iter=50,
-                    n_init=10,
-                    init_algorithm=init_algorithm,
-                    distance=distance,
-                    distance_params={"window": 0.05},
-                    random_state=random_state,
-                    averaging_method="ba",
-                    **kwargs,
-                )
-            else:
-                return TimeSeriesKMeans(
-                    max_iter=50,
-                    n_init=10,
-                    init_algorithm=init_algorithm,
-                    distance=distance,
-                    distance_params={"window": 0.05},
-                    random_state=random_state,
-                    averaging_method="mean",
-                    **kwargs,
-                )
-
     if "window" in c:
         distance_params = {**distance_params, "window": 0.2}
     average_params = {"distance": distance, **distance_params.copy()}
 
-    if "faster" in c:
-        average_params = {
-            **average_params,
-            "method": "holdit",
-        }
-    elif "proper-stopping" in c:
-        average_params = {**average_params, "method": "holdit_stopping"}
-    elif "approx-stopping" in c:
-        average_params = {
-            **average_params,
-            "method": "holdit_stopping_approx",
-        }
-    elif "avg-change-stopping" in c:
-        average_params = {
-            **average_params,
-            "method": "holdit_stopping_avg_change",
-        }
-    else:
-        average_params = {
-            **average_params,
-            "method": "subgradient",
-        }
-
+    average_params = {**average_params, "method": "holdit_stopping"}
     potential_size_arg = ["50", "40", "30", "20", "10"]
     if any(arg in c for arg in potential_size_arg):
         size = int(c.split("-")[0])
@@ -660,6 +481,67 @@ def _set_experimental_clusterer(
             **average_params,
             "holdit_num_ts_to_use_percentage": size / 100,
         }
+    curr_experiments_forgy_restarts = [
+        "kmeans-ssg-forgy-restarts-adtw",
+        "kmeans-ssg-forgy-restarts-msm",
+        "kmeans-ssg-forgy-restarts-twe",
+    ]
+    if c in curr_experiments_forgy_restarts:
+        return HoldItKmeans(
+            max_iter=50,
+            n_init=10,
+            init_algorithm="random",
+            distance=distance,
+            distance_params=distance_params,
+            random_state=random_state,
+            averaging_method="ba",
+            average_params=average_params,
+            verbose=True,
+            **kwargs,
+        )
+
+    curr_experiments_kmeans_plus_plus = [
+        "kmeans-ssg-kmeans++-adtw",
+        "kmeans-ssg-kmeans++-msm",
+        "kmeans-ssg-kmeans++-twe",
+    ]
+    if c in curr_experiments_kmeans_plus_plus:
+        return HoldItKmeans(
+            max_iter=50,
+            n_init=1,
+            init_algorithm="kmeans++",
+            distance=distance,
+            distance_params=distance_params,
+            random_state=random_state,
+            averaging_method="ba",
+            average_params={
+                **average_params,
+            },
+            verbose=True,
+            **kwargs,
+        )
+
+    curr_experiments_kmeans_plus_plus_increase_iterations = [
+        "kmeans-ssg-kmeans++-increase-iterations-adtw",
+        "kmeans-ssg-kmeans++-increase-iterations-msm",
+        "kmeans-ssg-kmeans++-increase-iterations-twe",
+    ]
+    if c in curr_experiments_kmeans_plus_plus_increase_iterations:
+        return HoldItKmeans(
+            max_iter=300,
+            n_init=1,
+            init_algorithm="kmeans++",
+            distance=distance,
+            distance_params=distance_params,
+            random_state=random_state,
+            averaging_method="ba",
+            average_params={
+                **average_params,
+                "max_iters": 300,
+            },
+            verbose=True,
+            **kwargs,
+        )
 
     return TimeSeriesKMeans(
         max_iter=50,
