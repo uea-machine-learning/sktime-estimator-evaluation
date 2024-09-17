@@ -1,23 +1,28 @@
 import os
-from tsml.datasets import load_from_ts_file
-from tsml_eval.experiments import run_clustering_experiment
-from tsml_eval.estimators.clustering.consensus.experiment_utils import \
-    get_dataset_list_for_model_dir
+import queue
 from concurrent.futures import ThreadPoolExecutor, as_completed
+
+import numpy as np
+from tsml.datasets import load_from_ts_file
+
 from tsml_eval.estimators.clustering.consensus import (
-    FromFileSimpleVote,
-    FromFileIterativeVotingClustering,
     CSPAFromFile,
+    ElasticEnsembleClustererFromFile,
+    FromFileIterativeVotingClustering,
+    FromFileSimpleVote,
+    HBGFFromFile,
     HGPAFromFile,
     MCLAFromFile,
-    HBGFFromFile,
     NMFFromFile,
-    ElasticEnsembleClustererFromFile
 )
-import queue
+from tsml_eval.estimators.clustering.consensus.experiment_utils import (
+    get_dataset_list_for_model_dir,
+)
+from tsml_eval.experiments import run_clustering_experiment
+from tsml_eval.utils.datasets import load_experiment_data
 
-RESULT_PATH = "/home/chris/Documents/phd-results/normalised"
 DATASET_PATH = "/home/chris/Documents/Univariate_ts"
+
 
 def _get_model(ensemble_model_name: str, clusterers: list[str]):
     """Get the ensemble model from the name
@@ -53,15 +58,18 @@ def _get_model(ensemble_model_name: str, clusterers: list[str]):
     else:
         raise ValueError(f"Unknown ensemble model: {ensemble_model_name}")
 
+
 def process_dataset(
-        dataset: str,
-        model_names: list[str],
-        err_datasets: list[str],
-        ensemble_model_name: str,
-        result_model_name: str,
-        clustering_results_dir_name: str,
-        count: int = 0,
-        total: int = 0
+    dataset: str,
+    result_path: str,
+    model_names: list[str],
+    err_datasets: list[str],
+    ensemble_model_name: str,
+    result_model_name: str,
+    clustering_results_dir_name: str,
+    count: int = 0,
+    total: int = 0,
+    test_train_split: bool = True,
 ):
     """Process a dataset.
 
@@ -95,35 +103,52 @@ def process_dataset(
     total : int
         The total number of datasets. This is used for logging.
     """
-    resample_id = 0 # Move to param later
+    resample_id = 0  # Move to param later
     build_test_file = True
     build_train_file = True
-    if os.path.exists(f"{RESULT_PATH}/{ensemble_model_name}/{result_model_name}/Predictions/{dataset}/testResample{resample_id}.csv"):
+    if os.path.exists(
+        f"{result_path}/{ensemble_model_name}/{result_model_name}/Predictions/{dataset}/testResample{resample_id}.csv"
+    ):
         build_test_file = False
-    if os.path.exists(f"{RESULT_PATH}/{ensemble_model_name}/{result_model_name}/Predictions/{dataset}/trainResample{resample_id}.csv"):
+    if os.path.exists(
+        f"{result_path}/{ensemble_model_name}/{result_model_name}/Predictions/{dataset}/trainResample{resample_id}.csv"
+    ):
         build_train_file = False
 
     if not build_test_file and not build_train_file:
         print(f"Skipping {dataset} results as they already exists")
         return
     clusterers = [
-        f"{RESULT_PATH}/{clustering_results_dir_name}/{model_name}/Predictions/{dataset}/"
-        for
-        model_name in model_names]
+        f"{result_path}/{clustering_results_dir_name}/{model_name}/Predictions/{dataset}/"
+        for model_name in model_names
+    ]
     print(
-        f"Running {count}/{total}: {dataset} with {ensemble_model_name} and {result_model_name}")
+        f"Running {count}/{total}: {dataset} with {ensemble_model_name} and {result_model_name}"
+    )
 
     c = _get_model(ensemble_model_name, clusterers)
 
-    X_train, y_train = load_from_ts_file(f"{DATASET_PATH}/{dataset}/{dataset}_TRAIN.ts")
-    X_test, y_test = load_from_ts_file(f"{DATASET_PATH}/{dataset}/{dataset}_TEST.ts")
+    X_train, y_train, X_test, y_test, resample = load_experiment_data(
+        DATASET_PATH, dataset, 0, False
+    )
+
+    if not test_train_split:
+        y_train = np.concatenate((y_train, y_test), axis=None)
+        X_train = (
+            np.concatenate([X_train, X_test], axis=0)
+            if isinstance(X_train, np.ndarray)
+            else X_train + X_test
+        )
+        X_test = None
+        y_test = None
+        build_test_file = False
 
     try:
         run_clustering_experiment(
             X_train,
             y_train,
             c,
-            f"{RESULT_PATH}/{ensemble_model_name}",
+            f"{result_path}/{ensemble_model_name}",
             X_test=X_test,
             y_test=y_test,
             n_clusters=-1,
@@ -134,19 +159,23 @@ def process_dataset(
             clusterer_name=result_model_name,
         )
     except ValueError as e:
-        # print(f"======== Error in {dataset} ========")
+        print(f"======== Error in {dataset} ========")
         err_datasets.append(dataset)
         print(e)
-    print(f"Finished {count}/{total}: {dataset} with {ensemble_model_name} and {result_model_name}")
+    print(
+        f"Finished {count}/{total}: {dataset} with {ensemble_model_name} and {result_model_name}"
+    )
     return err_datasets
 
 
 def run_experiment_for_model(
-        clustering_results_dir_name: str,
-        ensemble_model_name: str,
-        result_model_name: str,
-        use_specific_models: list[str],
-        thread = False
+    clustering_results_dir_name: str,
+    result_path: str,
+    ensemble_model_name: str,
+    result_model_name: str,
+    use_specific_models: list[str],
+    thread=False,
+    test_train_split: bool = True,
 ):
     """Run an ensemble experiment with a directory of results
 
@@ -171,15 +200,20 @@ def run_experiment_for_model(
         pam directory and you only want to use 3 of them, you would specify the names
         of the 3 models here.
     """
-    model_path = f"{RESULT_PATH}/{clustering_results_dir_name}"
-    valid_datasets, model_names = get_dataset_list_for_model_dir(model_path)
+    model_path = f"{result_path}/{clustering_results_dir_name}"
+    valid_datasets, model_names, missing = get_dataset_list_for_model_dir(
+        model_path, test_train_split
+    )
 
     if ensemble_model_name not in result_model_name:
         result_model_name = f"{ensemble_model_name}-{result_model_name}"
 
     if len(use_specific_models) > 1:
-        temp_model_names = [model_name for model_name in model_names if
-                            model_name in use_specific_models]
+        temp_model_names = [
+            model_name
+            for model_name in model_names
+            if model_name in use_specific_models
+        ]
         model_names = temp_model_names
 
     # Check if results exist and raise error so we don't overwrite
@@ -201,13 +235,15 @@ def run_experiment_for_model(
                     future = executor.submit(
                         process_dataset,
                         dataset,
+                        result_path,
                         model_names,
                         err_datasets,
                         ensemble_model_name,
                         result_model_name,
                         clustering_results_dir_name,
                         i,
-                        num_datasets
+                        num_datasets,
+                        test_train_split,
                     )
                     futures[future] = dataset
 
@@ -221,15 +257,16 @@ def run_experiment_for_model(
         for i, dataset in enumerate(valid_datasets):
             process_dataset(
                 dataset,
+                result_path,
                 model_names,
                 err_datasets,
                 ensemble_model_name,
                 result_model_name,
                 clustering_results_dir_name,
                 i,
-                num_datasets
+                num_datasets,
+                test_train_split,
             )
-
 
     print("All datasets processed")
     print("Error datasets:", err_datasets)
@@ -243,13 +280,13 @@ if __name__ == "__main__":
 
     # All the supported ensemble models
     ensemble_models = [
-        # "simple-voting",
+        "simple-voting",
         # "iterative-voting",
         # "cspa",
         # "mcla",
         # "hbgf",
         # "nmf",
-        "elastic-ensemble"
+        # "elastic-ensemble"
     ]
 
     # Name of various configurations. So pam-all I use when clustering_result_dir_name
@@ -259,19 +296,27 @@ if __name__ == "__main__":
     # the specific_models dictionary.
     specific_models = {
         # "pam-all": [],
-        "pam-top-5": ["pam-twe", "pam-msm", "pam-adtw", "pam-edr", "pam-wdtw"],
+        # "pam-top-5": ["pam-twe", "pam-msm", "pam-adtw", "pam-edr", "pam-wdtw"],
         "pam-top-3": ["pam-twe", "pam-msm", "pam-adtw"],
     }
+    RESULT_PATH = "/home/chris/Documents/phd-results/31-aug-results/normalised"
 
-    for ensemble_model_name in ensemble_models:
-        for result_model_name, use_specific_models in specific_models.items():
-            print(f"Running {ensemble_model_name} with {result_model_name}")
-            # Check if it exists
+    for test_train_split in [True, False]:
+        if not test_train_split:
+            result_path = f"{RESULT_PATH}/combine-test-train-split"
+        else:
+            result_path = f"{RESULT_PATH}/test-train-split"
+        for ensemble_model_name in ensemble_models:
+            for result_model_name, use_specific_models in specific_models.items():
+                print(f"Running {ensemble_model_name} with {result_model_name}")
+                # Check if it exists
 
-            run_experiment_for_model(
-                clustering_results_dir_name=clustering_results_dir_name,
-                ensemble_model_name=ensemble_model_name,
-                result_model_name=result_model_name,
-                use_specific_models=use_specific_models,
-                thread=False
-            )
+                run_experiment_for_model(
+                    clustering_results_dir_name=clustering_results_dir_name,
+                    result_path=result_path,
+                    ensemble_model_name=ensemble_model_name,
+                    result_model_name=result_model_name,
+                    use_specific_models=use_specific_models,
+                    thread=True,
+                    test_train_split=test_train_split,
+                )
