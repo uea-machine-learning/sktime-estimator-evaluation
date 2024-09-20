@@ -3,6 +3,7 @@ import queue
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import numpy as np
+from aeon.transformations.collection import TimeSeriesScaler
 from tsml.datasets import load_from_ts_file
 
 from tsml_eval.estimators.clustering.consensus import (
@@ -53,8 +54,38 @@ def _get_model(ensemble_model_name: str, clusterers: list[str]):
         return HBGFFromFile(clusterers=clusterers, random_state=0)
     elif "nmf" in ensemble_model_name:
         return NMFFromFile(clusterers=clusterers, random_state=0)
-    elif "elastic-ensemble" in ensemble_model_name:
-        return ElasticEnsembleClustererFromFile(clusterers=clusterers, random_state=0)
+    elif "EE-davies-bouldin-twe" in ensemble_model_name:
+        distance_params = {"nu": 0.001, "lmbda": 1.0}
+        return ElasticEnsembleClustererFromFile(
+            clusterers=clusterers,
+            random_state=0,
+            evaluation_metric="davies_bouldin_score",
+            distances_to_average_over=["twe"],
+            distances_to_average_over_params=distance_params,
+        )
+    elif "EE-davies-bouldin-euclidean" in ensemble_model_name:
+        return ElasticEnsembleClustererFromFile(
+            clusterers=clusterers,
+            random_state=0,
+            evaluation_metric="davies_bouldin_score",
+            distances_to_average_over=["euclidean"],
+        )
+    elif "EE-calinski-harabasz-euclidean" in ensemble_model_name:
+        return ElasticEnsembleClustererFromFile(
+            clusterers=clusterers,
+            random_state=0,
+            evaluation_metric="calinski_harabasz_score",
+            distances_to_average_over=["euclidean"],
+        )
+    elif "EE-davies-bouldin-msm" in ensemble_model_name:
+        distance_params = {"c": 1.0, "window": 0.2}
+        return ElasticEnsembleClustererFromFile(
+            clusterers=clusterers,
+            random_state=0,
+            evaluation_metric="davies_bouldin_score",
+            distances_to_average_over=["msm"],
+            distances_to_average_over_params=distance_params,
+        )
     else:
         raise ValueError(f"Unknown ensemble model: {ensemble_model_name}")
 
@@ -70,6 +101,7 @@ def process_dataset(
     count: int = 0,
     total: int = 0,
     test_train_split: bool = True,
+    normalise: bool = True,
 ):
     """Process a dataset.
 
@@ -131,6 +163,12 @@ def process_dataset(
     X_train, y_train, X_test, y_test, resample = load_experiment_data(
         DATASET_PATH, dataset, 0, False
     )
+
+    # Normalise
+    if normalise:
+        scaler = TimeSeriesScaler()
+        X_train = scaler.fit_transform(X_train)
+        X_test = scaler.fit_transform(X_test)
 
     if not test_train_split:
         y_train = np.concatenate((y_train, y_test), axis=None)
@@ -276,17 +314,20 @@ if __name__ == "__main__":
     # Name of directory results are in so can be "pam" or "kmeans". But if you create
     # a custom one for example with 2 of pam and 3 of kmeans, then whatever the dir
     # name they sit in is what you should use here.
-    clustering_results_dir_name = "pam"
+    clustering_results_dir_name = "k-means-ba"
 
     # All the supported ensemble models
     ensemble_models = [
-        "simple-voting",
+        # "simple-voting",
         # "iterative-voting",
-        # "cspa",
+        "cspa",
         # "mcla",
         # "hbgf",
         # "nmf",
         # "elastic-ensemble"
+        # "EE-davies-bouldin-twe"
+        # "EE-davies-bouldin-msm",
+        # "EE-calinski-harabasz-euclidean"
     ]
 
     # Name of various configurations. So pam-all I use when clustering_result_dir_name
@@ -296,12 +337,15 @@ if __name__ == "__main__":
     # the specific_models dictionary.
     specific_models = {
         # "pam-all": [],
-        # "pam-top-5": ["pam-twe", "pam-msm", "pam-adtw", "pam-edr", "pam-wdtw"],
-        "pam-top-3": ["pam-twe", "pam-msm", "pam-adtw"],
+        # "pam-top-5": ["pam-twe", "pam-msm", "pam-adtw", "pam-soft-dtw", "pam-shape-dtw"],
+        # next
+        # "pam-top-3": ["pam-twe", "pam-msm", "pam-adtw"],
+        "k-means-ba-all": [],
+        # "k-means-ba-top-5": ["kmeans-ba-twe", "kmeans-ba-msm", "kmeans-ba-adtw", "kmeans-ba-soft-dtw", "kmeans-ba-shape-dtw"],
+        # "mixed": ["pam-twe", "pam-msm", "pam-adtw", "pam-soft-dtw", "pam-shape-dtw", "kmeans-ba-twe", "kmeans-ba-msm", "kmeans-ba-adtw", "kmeans-ba-soft-dtw", "kmeans-ba-shape-dtw"],
     }
     RESULT_PATH = "/home/chris/Documents/phd-results/31-aug-results/normalised"
-
-    for test_train_split in [True, False]:
+    for test_train_split in [False, True]:
         if not test_train_split:
             result_path = f"{RESULT_PATH}/combine-test-train-split"
         else:
@@ -317,6 +361,6 @@ if __name__ == "__main__":
                     ensemble_model_name=ensemble_model_name,
                     result_model_name=result_model_name,
                     use_specific_models=use_specific_models,
-                    thread=True,
+                    thread=False,
                     test_train_split=test_train_split,
                 )

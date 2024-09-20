@@ -1,16 +1,24 @@
 from abc import ABC, abstractmethod
+
 import numpy as np
 import pandas as pd
+from sklearn import preprocessing
 from sklearn.base import BaseEstimator, ClusterMixin
 from sklearn.cluster import KMeans
 from sklearn.utils import check_random_state
 from tsml.base import _clone_estimator
-from sklearn import preprocessing
 
 
 class BaseFromFileConsensus(BaseEstimator, ClusterMixin, ABC):
 
-    def __init__(self, clusterers: list[str], n_clusters=8, random_state=None, skip_y_check=False, overwrite_y=False):
+    def __init__(
+        self,
+        clusterers: list[str],
+        n_clusters=8,
+        random_state=None,
+        skip_y_check=False,
+        overwrite_y=False,
+    ):
         self.clusterers = clusterers
         self.n_clusters = n_clusters
         self.random_state = random_state
@@ -51,9 +59,9 @@ class BaseFromFileConsensus(BaseEstimator, ClusterMixin, ABC):
                     f"expected {X.shape[0]}, got {len(lines) - 3}"
                 )
             if (
-                    y is not None
-                    and not self.skip_y_check
-                    and len(np.unique(y)) != int(line2[5])
+                y is not None
+                and not self.skip_y_check
+                and len(np.unique(y)) != int(line2[5])
             ):
                 raise ValueError(
                     f"n_classes of {path + file_name} does not match X, "
@@ -113,8 +121,6 @@ class BaseFromFileConsensus(BaseEstimator, ClusterMixin, ABC):
 
         cluster_assignments = self._load_results_from_file(X, file_name)
         return self._build_ensemble(cluster_assignments)
-
-
 
     def predict_proba(self, X):
         """Predict cluster probabilities for X."""

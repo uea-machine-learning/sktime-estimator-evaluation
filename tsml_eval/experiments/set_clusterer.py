@@ -23,6 +23,9 @@ from tsml_eval.estimators.clustering import (
     TimeSeriesDBScan,
     TimeSeriesHDBScan,
 )
+from tsml_eval.estimators.clustering.partition._kshapes_extended import (
+    TimeSeriesKShapesExtended,
+)
 from tsml_eval.utils.datasets import load_experiment_data
 from tsml_eval.utils.functions import str_in_nested_list
 
@@ -349,15 +352,36 @@ experimental_clusterers = [
     "k-means-5-percent-window-ddtw",
     "k-means-ba-5-percent-window-dtw",
     # ssg-clusterer with proper early stopping
-    "kmeans-ssg-forgy-restarts-adtw",
-    "kmeans-ssg-forgy-restarts-msm",
-    "kmeans-ssg-forgy-restarts-twe",
-    "kmeans-ssg-kmeans++-adtw",
-    "kmeans-ssg-kmeans++-msm",
-    "kmeans-ssg-kmeans++-twe",
-    "kmeans-ssg-kmeans++-increase-iterations-adtw",
-    "kmeans-ssg-kmeans++-increase-iterations-msm",
-    "kmeans-ssg-kmeans++-increase-iterations-twe",
+    "kmeans-ssg-forgy-restarts-full-adtw",
+    "kmeans-ssg-forgy-restarts-full-msm",
+    "kmeans-ssg-forgy-restarts-full-twe",
+    "kmeans-ssg-kmeans++-full-adtw",
+    "kmeans-ssg-kmeans++-full-msm",
+    "kmeans-ssg-kmeans++-full-twe",
+    "kmeans-ssg-kmeans++-increase-iterations-full-adtw",
+    "kmeans-ssg-kmeans++-increase-iterations-full-msm",
+    "kmeans-ssg-kmeans++-increase-iterations-full-twe",
+    # With window
+    "50-kmeans-ssg-kmeans++-increase-iterations-adtw",
+    "50-kmeans-ssg-kmeans++-increase-iterations-msm",
+    "50-kmeans-ssg-kmeans++-increase-iterations-twe",
+    "40-kmeans-ssg-kmeans++-increase-iterations-adtw",
+    "40-kmeans-ssg-kmeans++-increase-iterations-msm",
+    "40-kmeans-ssg-kmeans++-increase-iterations-twe",
+    "30-kmeans-ssg-kmeans++-increase-iterations-adtw",
+    "30-kmeans-ssg-kmeans++-increase-iterations-msm",
+    "30-kmeans-ssg-kmeans++-increase-iterations-twe",
+    "20-kmeans-ssg-kmeans++-increase-iterations-adtw",
+    "20-kmeans-ssg-kmeans++-increase-iterations-msm",
+    "20-kmeans-ssg-kmeans++-increase-iterations-twe",
+    "10-kmeans-ssg-kmeans++-increase-iterations-adtw",
+    "10-kmeans-ssg-kmeans++-increase-iterations-msm",
+    "10-kmeans-ssg-kmeans++-increase-iterations-twe",
+    # Additional
+    "k-means++-k-shapes",
+    "k-means++-increase-iterations-k-shapes",
+    "k-means++-k-means-soft-dba",
+    "k-means++-increase-iterations-k-means-soft-dba",
 ]
 
 
@@ -469,22 +493,31 @@ def _set_experimental_clusterer(
             distance, data_vars, row_normalise
         )
 
-    if "window" in c:
-        distance_params = {**distance_params, "window": 0.2}
     average_params = {"distance": distance, **distance_params.copy()}
 
-    average_params = {**average_params, "method": "holdit_stopping"}
+    average_params = {
+        **average_params,
+        "method": "holdit_stopping",
+        "holdit_num_ts_to_use_percentage": 1.0,
+    }
     potential_size_arg = ["50", "40", "30", "20", "10"]
     if any(arg in c for arg in potential_size_arg):
         size = int(c.split("-")[0])
+        # average_params = {
+        #     **average_params,
+        # "holdit_num_ts_to_use_percentage": size / 100,
+        # }
+        window = size / 100
+        distance_params = {**distance_params, "window": window}
         average_params = {
             **average_params,
-            "holdit_num_ts_to_use_percentage": size / 100,
+            "window": window,
         }
+
     curr_experiments_forgy_restarts = [
-        "kmeans-ssg-forgy-restarts-adtw",
-        "kmeans-ssg-forgy-restarts-msm",
-        "kmeans-ssg-forgy-restarts-twe",
+        "kmeans-ssg-forgy-restarts-full-adtw",
+        "kmeans-ssg-forgy-restarts-full-msm",
+        "kmeans-ssg-forgy-restarts-full-twe",
     ]
     if c in curr_experiments_forgy_restarts:
         return HoldItKmeans(
@@ -501,9 +534,9 @@ def _set_experimental_clusterer(
         )
 
     curr_experiments_kmeans_plus_plus = [
-        "kmeans-ssg-kmeans++-adtw",
-        "kmeans-ssg-kmeans++-msm",
-        "kmeans-ssg-kmeans++-twe",
+        "kmeans-ssg-kmeans++-full-adtw",
+        "kmeans-ssg-kmeans++-full-msm",
+        "kmeans-ssg-kmeans++-full-twe",
     ]
     if c in curr_experiments_kmeans_plus_plus:
         return HoldItKmeans(
@@ -522,9 +555,9 @@ def _set_experimental_clusterer(
         )
 
     curr_experiments_kmeans_plus_plus_increase_iterations = [
-        "kmeans-ssg-kmeans++-increase-iterations-adtw",
-        "kmeans-ssg-kmeans++-increase-iterations-msm",
-        "kmeans-ssg-kmeans++-increase-iterations-twe",
+        "kmeans-ssg-kmeans++-increase-iterations-full-adtw",
+        "kmeans-ssg-kmeans++-increase-iterations-full-msm",
+        "kmeans-ssg-kmeans++-increase-iterations-full-twe",
     ]
     if c in curr_experiments_kmeans_plus_plus_increase_iterations:
         return HoldItKmeans(
@@ -543,18 +576,101 @@ def _set_experimental_clusterer(
             **kwargs,
         )
 
-    return TimeSeriesKMeans(
-        max_iter=50,
-        n_init=10,
-        init_algorithm="random",
-        distance=distance,
-        distance_params=distance_params,
-        random_state=random_state,
-        averaging_method="ba",
-        average_params=average_params,
-        verbose=True,
-        **kwargs,
-    )
+    curr_window_experiments = [
+        "50-kmeans-ssg-kmeans++-increase-iterations-adtw",
+        "50-kmeans-ssg-kmeans++-increase-iterations-msm",
+        "50-kmeans-ssg-kmeans++-increase-iterations-twe",
+        "40-kmeans-ssg-kmeans++-increase-iterations-adtw",
+        "40-kmeans-ssg-kmeans++-increase-iterations-msm",
+        "40-kmeans-ssg-kmeans++-increase-iterations-twe",
+        "30-kmeans-ssg-kmeans++-increase-iterations-adtw",
+        "30-kmeans-ssg-kmeans++-increase-iterations-msm",
+        "30-kmeans-ssg-kmeans++-increase-iterations-twe",
+        "20-kmeans-ssg-kmeans++-increase-iterations-adtw",
+        "20-kmeans-ssg-kmeans++-increase-iterations-msm",
+        "20-kmeans-ssg-kmeans++-increase-iterations-twe",
+        "10-kmeans-ssg-kmeans++-increase-iterations-adtw",
+        "10-kmeans-ssg-kmeans++-increase-iterations-msm",
+        "10-kmeans-ssg-kmeans++-increase-iterations-twe",
+    ]
+    if c in curr_window_experiments:
+        return HoldItKmeans(
+            max_iter=300,
+            n_init=1,
+            init_algorithm="kmeans++",
+            distance=distance,
+            distance_params=distance_params,
+            random_state=random_state,
+            averaging_method="ba",
+            average_params={
+                **average_params,
+                "max_iters": 300,
+            },
+            verbose=True,
+            **kwargs,
+        )
+
+    curr_kshapes_experiments = [
+        "k-means++-k-shapes",
+        "k-means++-increase-iterations-k-shapes",
+    ]
+    if c in curr_kshapes_experiments:
+        if c == "k-means++-k-shapes":
+            return TimeSeriesKShapesExtended(
+                init_algorithm="kmeans++",
+                max_iter=50,
+                n_init=10,
+                tol=1e-06,
+                random_state=random_state,
+                **kwargs,
+            )
+        elif c == "k-means++-increase-iterations-k-shapes":
+            return TimeSeriesKShapesExtended(
+                init_algorithm="kmeans++",
+                max_iter=300,
+                n_init=1,
+                tol=1e-06,
+                random_state=random_state,
+                **kwargs,
+            )
+
+    curr_kmeans_soft_dba_experiments = [
+        "k-means++-k-means-soft-dba",
+        "k-means++-increase-iterations-k-means-soft-dba",
+    ]
+    if c in curr_kmeans_soft_dba_experiments:
+        average_params = {
+            **average_params,
+            "method": "soft_dba",
+        }
+        if c == "k-means++-k-means-soft-dba":
+            return TimeSeriesKMeans(
+                max_iter=50,
+                n_init=10,
+                init_algorithm="kmeans++",
+                distance="soft_dtw",
+                distance_params=distance_params,
+                random_state=random_state,
+                averaging_method="ba",
+                average_params=average_params,
+                **kwargs,
+            )
+        elif c == "k-means++-increase-iterations-k-means-soft-dba":
+            return TimeSeriesKMeans(
+                max_iter=300,
+                n_init=1,
+                init_algorithm="kmeans++",
+                distance="soft_dtw",
+                distance_params=distance_params,
+                random_state=random_state,
+                averaging_method="ba",
+                average_params={
+                    **average_params,
+                    "max_iters": 300,
+                },
+                **kwargs,
+            )
+    raise ValueError(f"UNKNOWN CLUSTERER: {c} in set_clusterer")
 
 
 def _set_clusterer_distance_based(

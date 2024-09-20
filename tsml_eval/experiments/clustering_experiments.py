@@ -124,15 +124,14 @@ def run_experiment(args):
         # data_path = "/home/chris/Documents/Univariate_ts"
         results_path = _CLUSTERER_RESULTS_PATH
         soft_dtw_tests = [
-            "kmeans-ssg-forgy-restarts-adtw",
-            "kmeans-ssg-forgy-restarts-msm",
-            "kmeans-ssg-forgy-restarts-twe",
-            "kmeans-ssg-kmeans++-adtw",
-            "kmeans-ssg-kmeans++-msm",
-            "kmeans-ssg-kmeans++-twe",
-            "kmeans-ssg-kmeans++-increase-iterations-adtw",
-            "kmeans-ssg-kmeans++-increase-iterations-msm",
-            "kmeans-ssg-kmeans++-increase-iterations-twe",
+            # "k-means++-k-shapes",
+            # "k-means++-increase-iterations-k-shapes",
+            "50-kmeans-ssg-kmeans++-increase-iterations-adtw",
+            "50-kmeans-ssg-kmeans++-increase-iterations-msm",
+            "50-kmeans-ssg-kmeans++-increase-iterations-twe",
+            "20-kmeans-ssg-kmeans++-increase-iterations-adtw",
+            "20-kmeans-ssg-kmeans++-increase-iterations-msm",
+            "20-kmeans-ssg-kmeans++-increase-iterations-twe",
         ]
 
         for estimator_name in soft_dtw_tests:

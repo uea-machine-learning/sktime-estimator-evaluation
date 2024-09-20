@@ -8,6 +8,10 @@ from sklearn.cluster import KMeans
 from sklearn.utils import check_random_state
 from tsml.base import _clone_estimator
 
+from tsml_eval.estimators.clustering.consensus.utils.ensemble_utils import (
+    extract_distances_from_model_names,
+)
+
 
 class SimpleVote(BaseEstimator, ClusterMixin):
     """
@@ -46,6 +50,7 @@ class SimpleVote(BaseEstimator, ClusterMixin):
 
     def __init__(self, clusterers=None, n_clusters=8, random_state=None):
         self.clusterers = clusterers
+        self.clusterers_distances = extract_distances_from_model_names(clusterers)
         self.n_clusters = n_clusters
         self.random_state = random_state
 
