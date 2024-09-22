@@ -382,6 +382,42 @@ experimental_clusterers = [
     "k-means++-increase-iterations-k-shapes",
     "k-means++-k-means-soft-dba",
     "k-means++-increase-iterations-k-means-soft-dba",
+
+    # Percentage to use
+    "50-average-kmeans-ssg-kmeans++-increase-iterations-msm",
+    "50-average-kmeans-ssg-kmeans++-increase-iterations-twe",
+    "40-average-kmeans-ssg-kmeans++-increase-iterations-msm",
+    "40-average-kmeans-ssg-kmeans++-increase-iterations-twe",
+    "30-average-kmeans-ssg-kmeans++-increase-iterations-msm",
+    "30-average-kmeans-ssg-kmeans++-increase-iterations-twe",
+    "20-average-kmeans-ssg-kmeans++-increase-iterations-msm",
+    "20-average-kmeans-ssg-kmeans++-increase-iterations-twe",
+    "10-average-kmeans-ssg-kmeans++-increase-iterations-msm",
+    "10-average-kmeans-ssg-kmeans++-increase-iterations-twe",
+
+    # Both
+    "50-both-kmeans-ssg-kmeans++-increase-iterations-msm",
+    "50-both-kmeans-ssg-kmeans++-increase-iterations-twe",
+    "40-both-kmeans-ssg-kmeans++-increase-iterations-msm",
+    "40-both-kmeans-ssg-kmeans++-increase-iterations-twe",
+    "30-both-kmeans-ssg-kmeans++-increase-iterations-msm",
+    "30-both-kmeans-ssg-kmeans++-increase-iterations-twe",
+    "20-both-kmeans-ssg-kmeans++-increase-iterations-msm",
+    "20-both-kmeans-ssg-kmeans++-increase-iterations-twe",
+    "10-both-kmeans-ssg-kmeans++-increase-iterations-msm",
+    "10-both-kmeans-ssg-kmeans++-increase-iterations-twe",
+
+    # Window in assignment half data in average
+    "50-assignment-average-kmeans-ssg-kmeans++-increase-iterations-msm",
+    "50-assignment-average-kmeans-ssg-kmeans++-increase-iterations-twe",
+    "40-assignment-average-kmeans-ssg-kmeans++-increase-iterations-msm",
+    "40-assignment-average-kmeans-ssg-kmeans++-increase-iterations-twe",
+    "30-assignment-average-kmeans-ssg-kmeans++-increase-iterations-msm",
+    "30-assignment-average-kmeans-ssg-kmeans++-increase-iterations-twe",
+    "20-assignment-average-kmeans-ssg-kmeans++-increase-iterations-msm",
+    "20-assignment-average-kmeans-ssg-kmeans++-increase-iterations-twe",
+    "10-assignment-average-kmeans-ssg-kmeans++-increase-iterations-msm",
+    "10-assignment-average-kmeans-ssg-kmeans++-increase-iterations-twe",
 ]
 
 
@@ -503,16 +539,34 @@ def _set_experimental_clusterer(
     potential_size_arg = ["50", "40", "30", "20", "10"]
     if any(arg in c for arg in potential_size_arg):
         size = int(c.split("-")[0])
-        # average_params = {
-        #     **average_params,
-        # "holdit_num_ts_to_use_percentage": size / 100,
-        # }
-        window = size / 100
-        distance_params = {**distance_params, "window": window}
-        average_params = {
-            **average_params,
-            "window": window,
-        }
+
+        if "assignment-average" in c:
+            window = size / 100
+            average_params = {
+                **average_params,
+                "holdit_num_ts_to_use_percentage": size / 100,
+            }
+            distance_params = {**distance_params, "window": window}
+        elif "average" in c:
+            average_params = {
+                **average_params,
+                "holdit_num_ts_to_use_percentage": size / 100,
+            }
+        elif "both" in c:
+            window = size / 100
+            average_params = {
+                **average_params,
+                "holdit_num_ts_to_use_percentage": size / 100,
+                "window": window,
+            }
+            distance_params = {**distance_params, "window": window}
+        else:
+            window = size / 100
+            distance_params = {**distance_params, "window": window}
+            average_params = {
+                **average_params,
+                "window": window,
+            }
 
     curr_experiments_forgy_restarts = [
         "kmeans-ssg-forgy-restarts-full-adtw",
@@ -594,6 +648,92 @@ def _set_experimental_clusterer(
         "10-kmeans-ssg-kmeans++-increase-iterations-twe",
     ]
     if c in curr_window_experiments:
+        return HoldItKmeans(
+            max_iter=300,
+            n_init=1,
+            init_algorithm="kmeans++",
+            distance=distance,
+            distance_params=distance_params,
+            random_state=random_state,
+            averaging_method="ba",
+            average_params={
+                **average_params,
+                "max_iters": 300,
+            },
+            verbose=True,
+            **kwargs,
+        )
+    curr_percentage_experiments = [
+        "50-average-kmeans-ssg-kmeans++-increase-iterations-msm",
+        "50-average-kmeans-ssg-kmeans++-increase-iterations-twe",
+        "40-average-kmeans-ssg-kmeans++-increase-iterations-msm",
+        "40-average-kmeans-ssg-kmeans++-increase-iterations-twe",
+        "30-average-kmeans-ssg-kmeans++-increase-iterations-msm",
+        "30-average-kmeans-ssg-kmeans++-increase-iterations-twe",
+        "20-average-kmeans-ssg-kmeans++-increase-iterations-msm",
+        "20-average-kmeans-ssg-kmeans++-increase-iterations-twe",
+        "10-average-kmeans-ssg-kmeans++-increase-iterations-msm",
+        "10-average-kmeans-ssg-kmeans++-increase-iterations-twe",
+    ]
+    if c in curr_percentage_experiments:
+        return HoldItKmeans(
+            max_iter=300,
+            n_init=1,
+            init_algorithm="kmeans++",
+            distance=distance,
+            distance_params=distance_params,
+            random_state=random_state,
+            averaging_method="ba",
+            average_params={
+                **average_params,
+                "max_iters": 300,
+            },
+            verbose=True,
+            **kwargs,
+        )
+
+    curr_both_experiments = [
+        "50-both-kmeans-ssg-kmeans++-increase-iterations-msm",
+        "50-both-kmeans-ssg-kmeans++-increase-iterations-twe",
+        "40-both-kmeans-ssg-kmeans++-increase-iterations-msm",
+        "40-both-kmeans-ssg-kmeans++-increase-iterations-twe",
+        "30-both-kmeans-ssg-kmeans++-increase-iterations-msm",
+        "30-both-kmeans-ssg-kmeans++-increase-iterations-twe",
+        "20-both-kmeans-ssg-kmeans++-increase-iterations-msm",
+        "20-both-kmeans-ssg-kmeans++-increase-iterations-twe",
+        "10-both-kmeans-ssg-kmeans++-increase-iterations-msm",
+        "10-both-kmeans-ssg-kmeans++-increase-iterations-twe",
+    ]
+    if c in curr_both_experiments:
+        return HoldItKmeans(
+            max_iter=300,
+            n_init=1,
+            init_algorithm="kmeans++",
+            distance=distance,
+            distance_params=distance_params,
+            random_state=random_state,
+            averaging_method="ba",
+            average_params={
+                **average_params,
+                "max_iters": 300,
+            },
+            verbose=True,
+            **kwargs,
+        )
+
+    curr_assignment_average_experiments = [
+        "50-assignment-average-kmeans-ssg-kmeans++-increase-iterations-msm",
+        "50-assignment-average-kmeans-ssg-kmeans++-increase-iterations-twe",
+        "40-assignment-average-kmeans-ssg-kmeans++-increase-iterations-msm",
+        "40-assignment-average-kmeans-ssg-kmeans++-increase-iterations-twe",
+        "30-assignment-average-kmeans-ssg-kmeans++-increase-iterations-msm",
+        "30-assignment-average-kmeans-ssg-kmeans++-increase-iterations-twe",
+        "20-assignment-average-kmeans-ssg-kmeans++-increase-iterations-msm",
+        "20-assignment-average-kmeans-ssg-kmeans++-increase-iterations-twe",
+        "10-assignment-average-kmeans-ssg-kmeans++-increase-iterations-msm",
+        "10-assignment-average-kmeans-ssg-kmeans++-increase-iterations-twe",
+    ]
+    if c in curr_assignment_average_experiments:
         return HoldItKmeans(
             max_iter=300,
             n_init=1,
