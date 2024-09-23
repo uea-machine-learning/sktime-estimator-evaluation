@@ -17,7 +17,9 @@ from tsml_eval.estimators.clustering.consensus import (
     NMFFromFile,
 )
 from tsml_eval.estimators.clustering.consensus.experiment_utils import (
+    create_symlink_temp_experiment,
     get_dataset_list_for_model_dir,
+    get_output_path,
 )
 from tsml_eval.experiments import run_clustering_experiment
 from tsml_eval.utils.datasets import load_experiment_data
@@ -60,7 +62,7 @@ def _get_model(ensemble_model_name: str, clusterers: list[str]):
             clusterers=clusterers,
             random_state=0,
             evaluation_metric="davies_bouldin_score",
-            distances_to_average_over=["twe"],
+            distances_to_average_over="twe",
             distances_to_average_over_params=distance_params,
         )
     elif "EE-davies-bouldin-euclidean" in ensemble_model_name:
@@ -68,14 +70,7 @@ def _get_model(ensemble_model_name: str, clusterers: list[str]):
             clusterers=clusterers,
             random_state=0,
             evaluation_metric="davies_bouldin_score",
-            distances_to_average_over=["euclidean"],
-        )
-    elif "EE-calinski-harabasz-euclidean" in ensemble_model_name:
-        return ElasticEnsembleClustererFromFile(
-            clusterers=clusterers,
-            random_state=0,
-            evaluation_metric="calinski_harabasz_score",
-            distances_to_average_over=["euclidean"],
+            distances_to_average_over="euclidean",
         )
     elif "EE-davies-bouldin-msm" in ensemble_model_name:
         distance_params = {"c": 1.0, "window": 0.2}
@@ -83,7 +78,23 @@ def _get_model(ensemble_model_name: str, clusterers: list[str]):
             clusterers=clusterers,
             random_state=0,
             evaluation_metric="davies_bouldin_score",
-            distances_to_average_over=["msm"],
+            distances_to_average_over="msm",
+            distances_to_average_over_params=distance_params,
+        )
+    elif "EE-calinski-harabasz-euclidean" in ensemble_model_name:
+        return ElasticEnsembleClustererFromFile(
+            clusterers=clusterers,
+            random_state=0,
+            evaluation_metric="calinski_harabasz_score",
+            distances_to_average_over="euclidean",
+        )
+    elif "EE-calinski-harabasz-msm" in ensemble_model_name:
+        distance_params = {"c": 1.0, "window": 0.2}
+        return ElasticEnsembleClustererFromFile(
+            clusterers=clusterers,
+            random_state=0,
+            evaluation_metric="calinski_harabasz_score",
+            distances_to_average_over="msm",
             distances_to_average_over_params=distance_params,
         )
     else:
@@ -211,7 +222,6 @@ def run_experiment_for_model(
     result_path: str,
     ensemble_model_name: str,
     result_model_name: str,
-    use_specific_models: list[str],
     thread=False,
     test_train_split: bool = True,
 ):
@@ -232,11 +242,6 @@ def run_experiment_for_model(
         in the results directory. For example if you are only using 3 pam distances you
         may call it pam-top-3. If you are using all the pam distances you may call it
         pam-all.
-    use_specific_models : list[str]
-        The list of specific models to use. This is used when you want to use only a
-        subset of the models in the directory. For example if you have 5 models in the
-        pam directory and you only want to use 3 of them, you would specify the names
-        of the 3 models here.
     """
     model_path = f"{result_path}/{clustering_results_dir_name}"
     valid_datasets, model_names, missing = get_dataset_list_for_model_dir(
@@ -245,14 +250,6 @@ def run_experiment_for_model(
 
     if ensemble_model_name not in result_model_name:
         result_model_name = f"{ensemble_model_name}-{result_model_name}"
-
-    if len(use_specific_models) > 1:
-        temp_model_names = [
-            model_name
-            for model_name in model_names
-            if model_name in use_specific_models
-        ]
-        model_names = temp_model_names
 
     # Check if results exist and raise error so we don't overwrite
     err_datasets = []
@@ -310,20 +307,22 @@ def run_experiment_for_model(
     print("Error datasets:", err_datasets)
 
 
+import shutil
+
 if __name__ == "__main__":
     # Name of directory results are in so can be "pam" or "kmeans". But if you create
     # a custom one for example with 2 of pam and 3 of kmeans, then whatever the dir
     # name they sit in is what you should use here.
-    clustering_results_dir_name = "k-means-ba"
+    clustering_results_dir_name = "pam"
 
     # All the supported ensemble models
     ensemble_models = [
-        # "simple-voting",
-        # "iterative-voting",
-        "cspa",
-        # "mcla",
-        # "hbgf",
-        # "nmf",
+        "simple-voting",
+        "iterative-voting",
+        # "cspa",
+        "mcla",
+        "hbgf",
+        "nmf",
         # "elastic-ensemble"
         # "EE-davies-bouldin-twe"
         # "EE-davies-bouldin-msm",
@@ -338,29 +337,52 @@ if __name__ == "__main__":
     specific_models = {
         # "pam-all": [],
         # "pam-top-5": ["pam-twe", "pam-msm", "pam-adtw", "pam-soft-dtw", "pam-shape-dtw"],
-        # next
         # "pam-top-3": ["pam-twe", "pam-msm", "pam-adtw"],
-        "k-means-ba-all": [],
+        # "k-means-ba-all": [],
         # "k-means-ba-top-5": ["kmeans-ba-twe", "kmeans-ba-msm", "kmeans-ba-adtw", "kmeans-ba-soft-dtw", "kmeans-ba-shape-dtw"],
         # "mixed": ["pam-twe", "pam-msm", "pam-adtw", "pam-soft-dtw", "pam-shape-dtw", "kmeans-ba-twe", "kmeans-ba-msm", "kmeans-ba-adtw", "kmeans-ba-soft-dtw", "kmeans-ba-shape-dtw"],
+        # "k-means-ba": ["k-means-ba-dtw", "k-means-ba-msm", "k-means-ba-twe", "k-means-ba-erp", "k-means-ba-wdtw", "k-means-ba-adtw"],
+        "pam": [
+            "pam-dtw",
+            "pam-msm",
+            "pam-twe",
+            "pam-erp",
+            "pam-wdtw",
+            "pam-adtw",
+            "pam-ddtw",
+            "pam-wddtw",
+            "pam-edr",
+            "pam-lcss",
+        ]
     }
+    model_name = "pam"
+
+    # models_to_use = ["k-means-ba-dtw", "k-means-ba-msm", "k-means-ba-twe", "k-means-ba-erp", "k-means-ba-wdtw", "k-means-ba-adtw", "k-means-euclidean"],
     RESULT_PATH = "/home/chris/Documents/phd-results/31-aug-results/normalised"
     for test_train_split in [False, True]:
         if not test_train_split:
             result_path = f"{RESULT_PATH}/combine-test-train-split"
         else:
             result_path = f"{RESULT_PATH}/test-train-split"
-        for ensemble_model_name in ensemble_models:
-            for result_model_name, use_specific_models in specific_models.items():
-                print(f"Running {ensemble_model_name} with {result_model_name}")
-                # Check if it exists
 
-                run_experiment_for_model(
-                    clustering_results_dir_name=clustering_results_dir_name,
-                    result_path=result_path,
-                    ensemble_model_name=ensemble_model_name,
-                    result_model_name=result_model_name,
-                    use_specific_models=use_specific_models,
-                    thread=False,
-                    test_train_split=test_train_split,
-                )
+        TEMP_EXPERIMENT_PATH = os.path.join(result_path, "temp-ensemble-experiment")
+        # check if exists and delete
+        if os.path.exists(TEMP_EXPERIMENT_PATH):
+            shutil.rmtree(TEMP_EXPERIMENT_PATH)
+        create_symlink_temp_experiment(
+            TEMP_EXPERIMENT_PATH, result_path, specific_models
+        )
+
+        for ensemble_model_name in ensemble_models:
+            print(f"Running {ensemble_model_name} with {model_name}")
+            # Check if it exists
+
+            run_experiment_for_model(
+                clustering_results_dir_name="temp-ensemble-experiment",
+                result_path=result_path,
+                ensemble_model_name=ensemble_model_name,
+                result_model_name=model_name,
+                thread=True,
+                test_train_split=test_train_split,
+            )
+        shutil.rmtree(TEMP_EXPERIMENT_PATH)

@@ -382,7 +382,6 @@ experimental_clusterers = [
     "k-means++-increase-iterations-k-shapes",
     "k-means++-k-means-soft-dba",
     "k-means++-increase-iterations-k-means-soft-dba",
-
     # Percentage to use
     "50-average-kmeans-ssg-kmeans++-increase-iterations-msm",
     "50-average-kmeans-ssg-kmeans++-increase-iterations-twe",
@@ -394,7 +393,6 @@ experimental_clusterers = [
     "20-average-kmeans-ssg-kmeans++-increase-iterations-twe",
     "10-average-kmeans-ssg-kmeans++-increase-iterations-msm",
     "10-average-kmeans-ssg-kmeans++-increase-iterations-twe",
-
     # Both
     "50-both-kmeans-ssg-kmeans++-increase-iterations-msm",
     "50-both-kmeans-ssg-kmeans++-increase-iterations-twe",
@@ -406,7 +404,6 @@ experimental_clusterers = [
     "20-both-kmeans-ssg-kmeans++-increase-iterations-twe",
     "10-both-kmeans-ssg-kmeans++-increase-iterations-msm",
     "10-both-kmeans-ssg-kmeans++-increase-iterations-twe",
-
     # Window in assignment half data in average
     "50-assignment-average-kmeans-ssg-kmeans++-increase-iterations-msm",
     "50-assignment-average-kmeans-ssg-kmeans++-increase-iterations-twe",
@@ -418,6 +415,9 @@ experimental_clusterers = [
     "20-assignment-average-kmeans-ssg-kmeans++-increase-iterations-twe",
     "10-assignment-average-kmeans-ssg-kmeans++-increase-iterations-msm",
     "10-assignment-average-kmeans-ssg-kmeans++-increase-iterations-twe",
+    # Final model KESBA
+    "kesba-forgy-restarts-twe",
+    "kesba-forgy-restarts-msm",
 ]
 
 
@@ -810,6 +810,47 @@ def _set_experimental_clusterer(
                 },
                 **kwargs,
             )
+
+    curr_kesba_experiments = [
+        "kesba-forgy-restarts-twe",
+        "kesba-forgy-restarts-msm",
+    ]
+    if c in curr_kesba_experiments:
+        if distance == "twe":
+            distance_params = {
+                **distance_params,
+                "window": 0.4,
+            }
+            average_params = {
+                **average_params,
+                "window": 0.4,
+                "holdit_num_ts_to_use_percentage": 0.4,
+            }
+        if distance == "msm":
+            distance_params = {
+                **distance_params,
+                "window": 0.5,
+            }
+            average_params = {
+                **average_params,
+                "window": 0.5,
+                "holdit_num_ts_to_use_percentage": 0.5,
+            }
+        return HoldItKmeans(
+            max_iter=300,
+            n_init=10,
+            init_algorithm="random",
+            distance=distance,
+            distance_params=distance_params,
+            random_state=random_state,
+            averaging_method="ba",
+            average_params={
+                **average_params,
+                "max_iters": 300,
+            },
+            verbose=True,
+            **kwargs,
+        )
     raise ValueError(f"UNKNOWN CLUSTERER: {c} in set_clusterer")
 
 

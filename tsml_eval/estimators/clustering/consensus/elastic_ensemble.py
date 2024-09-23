@@ -15,7 +15,7 @@ class ElasticEnsembleClustererFromFile(BaseFromFileConsensus):
         clusterers: list[str],
         n_clusters=1,
         evaluation_metric: str = "davies_bouldin_score",
-        distances_to_average_over: list[str] = ["twe"],
+        distances_to_average_over: str = "twe",
         distances_to_average_over_params: dict[str, dict] = None,
         random_state=None,
     ):
@@ -34,6 +34,37 @@ class ElasticEnsembleClustererFromFile(BaseFromFileConsensus):
     def _learn_accs(self, X):
         pass
 
+    def _compute_scores(self, X, cluster_assignments, evaluation_metric):
+        scores = []
+        for assignments in cluster_assignments:
+            if evaluation_metric == "davies_bouldin_score":
+                score = davies_bouldin_score_time_series(
+                    X,
+                    assignments,
+                    distance=self.distances_to_average_over,
+                    distance_params=self.distances_to_average_over_params,
+                )
+            else:
+                score = calinski_harabasz_score_time_series(
+                    X,
+                    assignments,
+                    distance=self.distances_to_average_over,
+                    distance_params=self.distances_to_average_over_params,
+                )
+            scores.append(score)
+
+        # Adjust weights based on the evaluation metric
+        if evaluation_metric == "davies_bouldin_score":
+            # Invert DB scores and normalize
+            epsilon = 1e-10  # Small value to prevent division by zero
+            inverted_scores = [1 / (score + epsilon) for score in scores]
+            total_inverted_score = sum(inverted_scores)
+            return [w / total_inverted_score for w in inverted_scores]
+        else:  # calinski_harabasz_score
+            # Use CH scores directly and normalize
+            total_score = sum(scores)
+            return [score / total_score for score in scores]
+
     def fit(self, X, y=None):
         """Fit model to X using IVC."""
         X = self._check_x(X)
@@ -45,37 +76,9 @@ class ElasticEnsembleClustererFromFile(BaseFromFileConsensus):
 
         cluster_assignments = self._load_results_from_file(X, file_name, y)
 
-        evaluation_method = (
-            davies_bouldin_score_time_series
-            if self.evaluation_metric == "davies_bouldin_score"
-            else calinski_harabasz_score_time_series
+        self.train_accs_by_classifier = self._compute_scores(
+            X, cluster_assignments, self.evaluation_metric
         )
-        scores = []
-        for assignments in cluster_assignments:
-            curr = 0
-            for distance in self.distances_to_average_over:
-                curr += evaluation_method(
-                    X,
-                    assignments,
-                    distance=distance,
-                    distance_params=self.distances_to_average_over_params,
-                )
-            avg_score = curr / len(self.distances_to_average_over)
-            scores.append(avg_score)
-
-        # Adjust weights based on the evaluation metric
-        if self.evaluation_metric == "davies_bouldin_score":
-            # Invert DB scores and normalize
-            epsilon = 1e-10  # Small value to prevent division by zero
-            inverted_scores = [1 / (score + epsilon) for score in scores]
-            total_inverted_score = sum(inverted_scores)
-            self.train_accs_by_classifier = [
-                w / total_inverted_score for w in inverted_scores
-            ]
-        else:  # calinski_harabasz_score
-            # Use CH scores directly and normalize
-            total_score = sum(scores)
-            self.train_accs_by_classifier = [score / total_score for score in scores]
 
         probas = self._predict_probs_from_labels(cluster_assignments)
 
