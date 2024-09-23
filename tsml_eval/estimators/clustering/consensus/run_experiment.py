@@ -73,7 +73,7 @@ def _get_model(ensemble_model_name: str, clusterers: list[str]):
             distances_to_average_over="euclidean",
         )
     elif "EE-davies-bouldin-twe" in ensemble_model_name:
-        distance_params = {"nu": 0.001, "lmbda": 1.0, "window": 0.5}
+        distance_params = {"nu": 0.001, "lmbda": 1.0}
         return ElasticEnsembleClustererFromFile(
             clusterers=clusterers,
             random_state=0,
@@ -89,7 +89,7 @@ def _get_model(ensemble_model_name: str, clusterers: list[str]):
             distances_to_average_over="euclidean",
         )
     elif "EE-calinski-harabasz-twe" in ensemble_model_name:
-        distance_params = {"nu": 0.001, "lmbda": 1.0, "window": 0.5}
+        distance_params = {"nu": 0.001, "lmbda": 1.0}
         return ElasticEnsembleClustererFromFile(
             clusterers=clusterers,
             random_state=0,
@@ -98,21 +98,21 @@ def _get_model(ensemble_model_name: str, clusterers: list[str]):
             distances_to_average_over_params=distance_params,
         )
     elif "EE-calinski-harabasz-msm" in ensemble_model_name:
-        distance_params = {"c": 1.0, "independent": True, "window": 0.5}
+        distance_params = {"c": 1.0, "independent": True}
         return ElasticEnsembleClustererFromFile(
             clusterers=clusterers,
             random_state=0,
             evaluation_metric="calinski_harabasz_score",
-            distances_to_average_over="twe",
+            distances_to_average_over="msm",
             distances_to_average_over_params=distance_params,
         )
     elif "EE-davies-bouldin-msm" in ensemble_model_name:
-        distance_params = {"c": 1.0, "independent": True, "window": 0.5}
+        distance_params = {"c": 1.0, "independent": True}
         return ElasticEnsembleClustererFromFile(
             clusterers=clusterers,
             random_state=0,
             evaluation_metric="davies_bouldin_score",
-            distances_to_average_over="twe",
+            distances_to_average_over="msm",
             distances_to_average_over_params=distance_params,
         )
     else:
@@ -265,8 +265,105 @@ def run_experiment_for_model(
     valid_datasets, model_names, missing = get_dataset_list_for_model_dir(
         model_path, test_train_split
     )
-    
-    valid_datasets = ['ACSF1', 'ArrowHead', 'BME', 'Beef', 'BeetleFly', 'BirdChicken', 'CBF', 'Car', 'Chinatown', 'ChlorineConcentration', 'CinCECGTorso', 'Computers', 'CricketX', 'CricketY', 'CricketZ', 'DiatomSizeReduction', 'DistalPhalanxOutlineAgeGroup', 'DistalPhalanxOutlineCorrect', 'ECG200', 'ECG5000', 'ECGFiveDays', 'EOGHorizontalSignal', 'EOGVerticalSignal', 'Earthquakes', 'EthanolLevel', 'FaceAll', 'FaceFour', 'FacesUCR', 'FiftyWords', 'FordA', 'FordB', 'FreezerRegularTrain', 'FreezerSmallTrain', 'GunPoint', 'GunPointAgeSpan', 'GunPointMaleVersusFemale', 'GunPointOldVersusYoung', 'Ham', 'HandOutlines', 'Haptics', 'Herring', 'HouseTwenty', 'InlineSkate', 'InsectEPGRegularTrain', 'InsectEPGSmallTrain', 'InsectWingbeatSound', 'ItalyPowerDemand', 'LargeKitchenAppliances', 'Lightning2', 'Lightning7', 'Mallat', 'MedicalImages', 'MiddlePhalanxOutlineCorrect', 'MixedShapesRegularTrain', 'MixedShapesSmallTrain', 'MoteStrain', 'NonInvasiveFetalECGThorax2', 'OSULeaf', 'PhalangesOutlinesCorrect', 'Phoneme', 'PigAirwayPressure', 'PigArtPressure', 'PigCVP', 'Plane', 'PowerCons', 'ProximalPhalanxOutlineCorrect', 'RefrigerationDevices', 'Rock', 'ScreenType', 'SemgHandGenderCh2', 'SemgHandMovementCh2', 'SemgHandSubjectCh2', 'ShapeletSim', 'ShapesAll', 'SmallKitchenAppliances', 'SmoothSubspace', 'SonyAIBORobotSurface1', 'SonyAIBORobotSurface2', 'Strawberry', 'SwedishLeaf', 'Symbols', 'SyntheticControl', 'ToeSegmentation1', 'ToeSegmentation2', 'Trace', 'TwoLeadECG', 'TwoPatterns', 'UMD', 'UWaveGestureLibraryAll', 'UWaveGestureLibraryX', 'UWaveGestureLibraryY', 'Wafer', 'WordSynonyms', 'Worms', 'WormsTwoClass', 'Yoga']
+
+    valid_datasets = [
+        "ACSF1",
+        "ArrowHead",
+        "BME",
+        "Beef",
+        "BeetleFly",
+        "BirdChicken",
+        "CBF",
+        "Car",
+        "Chinatown",
+        "ChlorineConcentration",
+        "CinCECGTorso",
+        "Computers",
+        "CricketX",
+        "CricketY",
+        "CricketZ",
+        "DiatomSizeReduction",
+        "DistalPhalanxOutlineAgeGroup",
+        "DistalPhalanxOutlineCorrect",
+        "ECG200",
+        "ECG5000",
+        "ECGFiveDays",
+        "EOGHorizontalSignal",
+        "EOGVerticalSignal",
+        "Earthquakes",
+        "EthanolLevel",
+        "FaceAll",
+        "FaceFour",
+        "FacesUCR",
+        "FiftyWords",
+        "FordA",
+        "FordB",
+        "FreezerRegularTrain",
+        "FreezerSmallTrain",
+        "GunPoint",
+        "GunPointAgeSpan",
+        "GunPointMaleVersusFemale",
+        "GunPointOldVersusYoung",
+        "Ham",
+        "HandOutlines",
+        "Haptics",
+        "Herring",
+        "HouseTwenty",
+        "InlineSkate",
+        "InsectEPGRegularTrain",
+        "InsectEPGSmallTrain",
+        "InsectWingbeatSound",
+        "ItalyPowerDemand",
+        "LargeKitchenAppliances",
+        "Lightning2",
+        "Lightning7",
+        "Mallat",
+        "MedicalImages",
+        "MiddlePhalanxOutlineCorrect",
+        "MixedShapesRegularTrain",
+        "MixedShapesSmallTrain",
+        "MoteStrain",
+        "NonInvasiveFetalECGThorax2",
+        "OSULeaf",
+        "PhalangesOutlinesCorrect",
+        "Phoneme",
+        "PigAirwayPressure",
+        "PigArtPressure",
+        "PigCVP",
+        "Plane",
+        "PowerCons",
+        "ProximalPhalanxOutlineCorrect",
+        "RefrigerationDevices",
+        "Rock",
+        "ScreenType",
+        "SemgHandGenderCh2",
+        "SemgHandMovementCh2",
+        "SemgHandSubjectCh2",
+        "ShapeletSim",
+        "ShapesAll",
+        "SmallKitchenAppliances",
+        "SmoothSubspace",
+        "SonyAIBORobotSurface1",
+        "SonyAIBORobotSurface2",
+        "Strawberry",
+        "SwedishLeaf",
+        "Symbols",
+        "SyntheticControl",
+        "ToeSegmentation1",
+        "ToeSegmentation2",
+        "Trace",
+        "TwoLeadECG",
+        "TwoPatterns",
+        "UMD",
+        "UWaveGestureLibraryAll",
+        "UWaveGestureLibraryX",
+        "UWaveGestureLibraryY",
+        "Wafer",
+        "WordSynonyms",
+        "Worms",
+        "WormsTwoClass",
+        "Yoga",
+    ]
 
     if ensemble_model_name not in result_model_name:
         result_model_name = f"{ensemble_model_name}-{result_model_name}"
@@ -344,7 +441,7 @@ if __name__ == "__main__":
         # "EE-davies-bouldin-twe"
         # "EE-davies-bouldin-msm",
         # "EE-calinski-harabasz-euclidean"
-        "EE-calinski-harabasz-msm"
+        "EE-calinski-harabasz-msm",
         # "EE-calinski-harabasz-msm"
     ]
 

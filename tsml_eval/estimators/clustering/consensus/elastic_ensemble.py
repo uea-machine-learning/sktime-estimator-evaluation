@@ -179,6 +179,7 @@ class ElasticEnsembleClustererFromFile(BaseFromFileConsensus):
     def _build_ensemble(self, cluster_assignments) -> np.ndarray:
         pass
 
+
 if __name__ == "__main__":
     import numpy as np
 

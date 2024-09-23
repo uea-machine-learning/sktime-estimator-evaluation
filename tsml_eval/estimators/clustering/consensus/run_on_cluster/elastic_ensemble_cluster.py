@@ -1,16 +1,11 @@
-import shutil
-import sys
-
-
-from tsml_eval.estimators.clustering.consensus.run_experiment import process_dataset, \
-    _get_model
+import argparse
 import os
+import sys
 
 import numpy as np
 from aeon.transformations.collection import TimeSeriesScaler
-from tsml_eval.estimators.clustering.consensus.experiment_utils import (
-    create_symlink_temp_experiment,
-)
+
+from tsml_eval.estimators.clustering.consensus.run_experiment import _get_model
 from tsml_eval.experiments import run_clustering_experiment
 from tsml_eval.utils.datasets import load_experiment_data
 
@@ -37,20 +32,31 @@ specific_models = {
 }
 
 if __name__ == "__main__":
-    # parser = argparse.ArgumentParser(description="Run the model on the dataset")
-    # parser.add_argument("model_name", type=str, help="Name of the model")
-    # parser.add_argument("dataset_name", type=str, help="Name of the dataset")
-    # parser.add_argument("running_on_cluster", type=lambda x: (str(x).lower() == 'true'), help="Whether the job runs on the cluster (true/false)")
-    # parser.add_argument("combine_test_train_split", type=lambda x: (str(x).lower() == 'true'), help="Whether to combine the test and train split (true/false)")
-    # args = parser.parse_args()
-    # model_name = args.model_name
-    # dataset_name = args.dataset_name
-    # running_on_cluster = args.running_on_cluster
-    # combine_test_train_split = args.combine_test_train_split
-    model_name = "EE-calinski-harabasz-euclidean"
-    dataset_name = "ACSF1"
-    running_on_cluster = True
-    combine_test_train_split = True
+    parser = argparse.ArgumentParser(description="Run the model on the dataset")
+    parser.add_argument("model_name", type=str, help="Name of the model")
+    parser.add_argument("dataset_name", type=str, help="Name of the dataset")
+    parser.add_argument(
+        "running_on_cluster",
+        type=lambda x: (str(x).lower() == "true"),
+        help="Whether the job runs on the cluster (true/false)",
+    )
+    parser.add_argument(
+        "combine_test_train_split",
+        type=lambda x: (str(x).lower() == "true"),
+        help="Whether to combine the test and train split (true/false)",
+    )
+    args = parser.parse_args()
+    model_name = args.model_name
+    dataset_name = args.dataset_name
+    running_on_cluster = args.running_on_cluster
+    combine_test_train_split = args.combine_test_train_split
+    # model_name = "EE-calinski-harabasz-euclidean"
+    # dataset_name = "ACSF1"
+    # running_on_cluster = True
+    # combine_test_train_split = True
+    print(f"Running {model_name} with {dataset_name}")
+    print(f"Running on cluster {running_on_cluster}")
+    print(f"Combining test and train split {combine_test_train_split}")
 
     dataset_path = "/home/chris/Documents/Univariate_ts"
     result_path = "/home/chris/Documents/phd-results/ee-test-results/temp-ee-results"
@@ -68,8 +74,10 @@ if __name__ == "__main__":
     else:
         models_to_ensemble_path = os.path.join(result_path, "pam")
 
-    print(f"Running {model_name} with {models_to_ensemble_path}.\nResult output path: {result_path}")
-    pam_models_to_use =[
+    print(
+        f"Running {model_name} with {models_to_ensemble_path}.\nResult output path: {result_path}"
+    )
+    pam_models_to_use = [
         "pam-dtw",
         "pam-msm",
         "pam-twe",
@@ -89,11 +97,11 @@ if __name__ == "__main__":
     build_test_file = True
     build_train_file = True
     if os.path.exists(
-            f"{result_path}/{model_name}/Predictions/{dataset_name}/testResample{resample_id}.csv"
+        f"{result_path}/{model_name}/Predictions/{dataset_name}/testResample{resample_id}.csv"
     ):
         build_test_file = False
     if os.path.exists(
-            f"{result_path}/{model_name}/Predictions/{dataset_name}/trainResample{resample_id}.csv"
+        f"{result_path}/{model_name}/Predictions/{dataset_name}/trainResample{resample_id}.csv"
     ):
         build_train_file = False
 
@@ -144,5 +152,3 @@ if __name__ == "__main__":
         build_train_file=build_train_file,
         clusterer_name=model_name,
     )
-
-
