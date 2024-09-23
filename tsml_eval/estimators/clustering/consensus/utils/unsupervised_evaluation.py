@@ -48,7 +48,7 @@ def calinski_harabasz_score_time_series(
         global_centroid = mean_average(X, distance=distance, **distance_params)
     else:
         global_centroid = elastic_barycenter_average(
-            X, distance=distance, **distance_params
+            X, distance=distance, method="holdit_stopping", holdit_num_ts_to_use_percentage=0.5, **distance_params
         )
 
     extra_disp = 0.0
@@ -71,7 +71,7 @@ def calinski_harabasz_score_time_series(
             centroid_k = mean_average(cluster_k, distance=distance, **distance_params)
         else:
             centroid_k = elastic_barycenter_average(
-                cluster_k, distance=distance, **distance_params
+                cluster_k, distance=distance, method="holdit_stopping", holdit_num_ts_to_use_percentage=0.5, **distance_params
             )
         centroids.append(centroid_k)
         cluster_sizes.append(n_k)
@@ -171,7 +171,7 @@ def davies_bouldin_score_time_series(
             centroid_k = mean_average(cluster_k, distance=distance, **distance_params)
         else:
             centroid_k = elastic_barycenter_average(
-                cluster_k, distance=distance, **distance_params
+                cluster_k, distance=distance, method="holdit_stopping", holdit_num_ts_to_use_percentage=0.5, **distance_params
             )
 
         if len(centroid_k.shape) == 1:

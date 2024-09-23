@@ -72,13 +72,13 @@ def _get_model(ensemble_model_name: str, clusterers: list[str]):
             evaluation_metric="davies_bouldin_score",
             distances_to_average_over="euclidean",
         )
-    elif "EE-davies-bouldin-msm" in ensemble_model_name:
-        distance_params = {"c": 1.0, "window": 0.2}
+    elif "EE-davies-bouldin-twe" in ensemble_model_name:
+        distance_params = {"nu": 0.001, "lmbda": 1.0, "window": 0.5}
         return ElasticEnsembleClustererFromFile(
             clusterers=clusterers,
             random_state=0,
             evaluation_metric="davies_bouldin_score",
-            distances_to_average_over="msm",
+            distances_to_average_over="twe",
             distances_to_average_over_params=distance_params,
         )
     elif "EE-calinski-harabasz-euclidean" in ensemble_model_name:
@@ -88,13 +88,31 @@ def _get_model(ensemble_model_name: str, clusterers: list[str]):
             evaluation_metric="calinski_harabasz_score",
             distances_to_average_over="euclidean",
         )
-    elif "EE-calinski-harabasz-msm" in ensemble_model_name:
-        distance_params = {"c": 1.0, "window": 0.2}
+    elif "EE-calinski-harabasz-twe" in ensemble_model_name:
+        distance_params = {"nu": 0.001, "lmbda": 1.0, "window": 0.5}
         return ElasticEnsembleClustererFromFile(
             clusterers=clusterers,
             random_state=0,
             evaluation_metric="calinski_harabasz_score",
-            distances_to_average_over="msm",
+            distances_to_average_over="twe",
+            distances_to_average_over_params=distance_params,
+        )
+    elif "EE-calinski-harabasz-msm" in ensemble_model_name:
+        distance_params = {"c": 1.0, "independent": True, "window": 0.5}
+        return ElasticEnsembleClustererFromFile(
+            clusterers=clusterers,
+            random_state=0,
+            evaluation_metric="calinski_harabasz_score",
+            distances_to_average_over="twe",
+            distances_to_average_over_params=distance_params,
+        )
+    elif "EE-davies-bouldin-msm" in ensemble_model_name:
+        distance_params = {"c": 1.0, "independent": True, "window": 0.5}
+        return ElasticEnsembleClustererFromFile(
+            clusterers=clusterers,
+            random_state=0,
+            evaluation_metric="davies_bouldin_score",
+            distances_to_average_over="twe",
             distances_to_average_over_params=distance_params,
         )
     else:
@@ -247,6 +265,8 @@ def run_experiment_for_model(
     valid_datasets, model_names, missing = get_dataset_list_for_model_dir(
         model_path, test_train_split
     )
+    
+    valid_datasets = ['ACSF1', 'ArrowHead', 'BME', 'Beef', 'BeetleFly', 'BirdChicken', 'CBF', 'Car', 'Chinatown', 'ChlorineConcentration', 'CinCECGTorso', 'Computers', 'CricketX', 'CricketY', 'CricketZ', 'DiatomSizeReduction', 'DistalPhalanxOutlineAgeGroup', 'DistalPhalanxOutlineCorrect', 'ECG200', 'ECG5000', 'ECGFiveDays', 'EOGHorizontalSignal', 'EOGVerticalSignal', 'Earthquakes', 'EthanolLevel', 'FaceAll', 'FaceFour', 'FacesUCR', 'FiftyWords', 'FordA', 'FordB', 'FreezerRegularTrain', 'FreezerSmallTrain', 'GunPoint', 'GunPointAgeSpan', 'GunPointMaleVersusFemale', 'GunPointOldVersusYoung', 'Ham', 'HandOutlines', 'Haptics', 'Herring', 'HouseTwenty', 'InlineSkate', 'InsectEPGRegularTrain', 'InsectEPGSmallTrain', 'InsectWingbeatSound', 'ItalyPowerDemand', 'LargeKitchenAppliances', 'Lightning2', 'Lightning7', 'Mallat', 'MedicalImages', 'MiddlePhalanxOutlineCorrect', 'MixedShapesRegularTrain', 'MixedShapesSmallTrain', 'MoteStrain', 'NonInvasiveFetalECGThorax2', 'OSULeaf', 'PhalangesOutlinesCorrect', 'Phoneme', 'PigAirwayPressure', 'PigArtPressure', 'PigCVP', 'Plane', 'PowerCons', 'ProximalPhalanxOutlineCorrect', 'RefrigerationDevices', 'Rock', 'ScreenType', 'SemgHandGenderCh2', 'SemgHandMovementCh2', 'SemgHandSubjectCh2', 'ShapeletSim', 'ShapesAll', 'SmallKitchenAppliances', 'SmoothSubspace', 'SonyAIBORobotSurface1', 'SonyAIBORobotSurface2', 'Strawberry', 'SwedishLeaf', 'Symbols', 'SyntheticControl', 'ToeSegmentation1', 'ToeSegmentation2', 'Trace', 'TwoLeadECG', 'TwoPatterns', 'UMD', 'UWaveGestureLibraryAll', 'UWaveGestureLibraryX', 'UWaveGestureLibraryY', 'Wafer', 'WordSynonyms', 'Worms', 'WormsTwoClass', 'Yoga']
 
     if ensemble_model_name not in result_model_name:
         result_model_name = f"{ensemble_model_name}-{result_model_name}"
@@ -310,23 +330,22 @@ def run_experiment_for_model(
 import shutil
 
 if __name__ == "__main__":
-    # Name of directory results are in so can be "pam" or "kmeans". But if you create
-    # a custom one for example with 2 of pam and 3 of kmeans, then whatever the dir
-    # name they sit in is what you should use here.
-    clustering_results_dir_name = "pam"
-
     # All the supported ensemble models
     ensemble_models = [
-        "simple-voting",
-        "iterative-voting",
+        # "simple-voting",
+        # "iterative-voting",
         # "cspa",
-        "mcla",
-        "hbgf",
-        "nmf",
+        # "mcla",
+        # "hbgf",
+        # "nmf",
         # "elastic-ensemble"
+        # "EE-davies-bouldin-euclidean",
+        "EE-davies-bouldin-msm",
         # "EE-davies-bouldin-twe"
         # "EE-davies-bouldin-msm",
         # "EE-calinski-harabasz-euclidean"
+        "EE-calinski-harabasz-msm"
+        # "EE-calinski-harabasz-msm"
     ]
 
     # Name of various configurations. So pam-all I use when clustering_result_dir_name
@@ -359,7 +378,7 @@ if __name__ == "__main__":
 
     # models_to_use = ["k-means-ba-dtw", "k-means-ba-msm", "k-means-ba-twe", "k-means-ba-erp", "k-means-ba-wdtw", "k-means-ba-adtw", "k-means-euclidean"],
     RESULT_PATH = "/home/chris/Documents/phd-results/31-aug-results/normalised"
-    for test_train_split in [False, True]:
+    for test_train_split in [False]:
         if not test_train_split:
             result_path = f"{RESULT_PATH}/combine-test-train-split"
         else:
