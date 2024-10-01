@@ -256,7 +256,7 @@ if __name__ == "__main__":
     labels = np.random.randint(0, 3, size=100)  # Assuming 3 clusters
 
     # Distance metric and parameters
-    distance_string = "msm"
+    distance_string = "twe"
 
     # Compute Calinski-Harabasz score
     ch_score = calinski_harabasz_score_time_series(

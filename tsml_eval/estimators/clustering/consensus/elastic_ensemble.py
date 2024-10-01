@@ -54,15 +54,12 @@ class ElasticEnsembleClustererFromFile(BaseFromFileConsensus):
                 )
             scores.append(score)
 
-        # Adjust weights based on the evaluation metric
         if evaluation_metric == "davies_bouldin_score":
-            # Invert DB scores and normalize
-            epsilon = 1e-10  # Small value to prevent division by zero
+            epsilon = 1e-10
             inverted_scores = [1 / (score + epsilon) for score in scores]
             total_inverted_score = sum(inverted_scores)
             return [w / total_inverted_score for w in inverted_scores]
-        else:  # calinski_harabasz_score
-            # Use CH scores directly and normalize
+        else:
             total_score = sum(scores)
             return [score / total_score for score in scores]
 

@@ -112,12 +112,14 @@ class FromFileSimpleVote(SimpleVote):
 
             uc = np.unique(cluster_assignments[i])
             if uc.shape[0] != self.n_clusters:
+                print("THIS SIMPLE ERROR")
                 raise ValueError(
                     "Input clusterers must have the same number of clusters as the "
                     f"FromFileSimpleVote n_clusters ({self.n_clusters}). Found "
                     f"{uc.shape[0]} for clusterer {i}."
                 )
             elif (np.sort(uc) != np.arange(self.n_clusters)).any():
+                print("OTHER SIMPLEERROR")
                 raise ValueError(
                     "Input clusterers must have cluster labels in the range "
                     "0 to  n_clusters - 1."
