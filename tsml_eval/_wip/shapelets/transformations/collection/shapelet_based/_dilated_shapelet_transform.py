@@ -22,7 +22,8 @@ from sklearn.utils._random import check_random_state
 from aeon.transformations.collection.base import BaseCollectionTransformer
 from aeon.utils.numba.general import AEON_NUMBA_STD_THRESHOLD, z_normalise_series
 from aeon.utils.validation import check_n_jobs
-import _quality_measures as qm
+
+from tsml_eval._wip.shapelets.transformations.collection.shapelet_based import _quality_measures as qm
 
 
 class RandomDilatedShapeletTransform(BaseCollectionTransformer):
@@ -40,13 +41,13 @@ class RandomDilatedShapeletTransform(BaseCollectionTransformer):
         For each candidate shapelet:
             - Extract a shapelet from an instance with random length, position and
               dimension and find its distance to each train case.
-            - Calculate the shapelet's information gain using the ordered list of
+            - Calculate the shapelet's quality using the ordered list of
               distances and train data class labels.
             - Abandon evaluating the shapelet if it is impossible to obtain a higher
-              information gain than the current worst.
+              discriminative ability than the current worst.
         For each shapelet batch:
-            - Add each candidate to its classes shapelet heap, removing the lowest
-              information gain shapelet if the max number of shapelets has been met.
+            - Add each candidate to its classes shapelet heap, removing the least
+              discriminative shapelet if the max number of shapelets has been met.
             - Remove self-similar shapelets from the heap.
     Using the final set of filtered shapelets, transform the data into a vector of
     of distances from a series to each shapelet.
@@ -55,7 +56,7 @@ class RandomDilatedShapeletTransform(BaseCollectionTransformer):
     ----------
     n_shapelet_samples : int, default=10000
         The number of candidate shapelets to be evaluated. Filtered down to
-        <= max_shapelets, keeping the shapelets with the most information gain.
+        <= max_shapelets, keeping the most discriminative shapelets.
     max_shapelets : int or None, default=None
         Max number of shapelets to keep for the final transform. Each class value will
         have its own max, set to n_classes / max_shapelets. If None uses the min between
@@ -64,6 +65,10 @@ class RandomDilatedShapeletTransform(BaseCollectionTransformer):
         Lower bound on candidate shapelet lengths.
     max_shapelet_length : int or None, default= None
         Upper bound on candidate shapelet lengths. If None no max length is used.
+    shapelet_pos : int or None, default=None.
+        An option to set the location of shapelet candidates. Must be less than the 
+        shortest time series minus the shapelet's length. A value of None genegerates 
+        random positions for each shapelet candidate.
     remove_self_similar : boolean, default=True
         Remove overlapping "self-similar" shapelets when merging candidate shapelets.
     time_limit_in_minutes : int, default=0
@@ -84,6 +89,15 @@ class RandomDilatedShapeletTransform(BaseCollectionTransformer):
         shapelets.
     random_state : int or None, default=None
         Seed for random number generation.
+    shapelet_quality : str, default "INFO_GAIN"
+        The quality measure used to assess viable shapelet candidates. Currently, this can
+        be "INFO_GAIN" or "F_STAT".
+    length_selector: str, default "RANDOM"
+        This can be "FIXED" or "RANDOM" or 'Dilated'. Random selects a random value within given
+        range for each shapelet candidate. Fixed randomly selects either 9,11, or 
+        13 and will be the same for all candidate shapelets. Dilated finds the range of possible
+        dilations for the dataset and scale the fixed lengths by each of these.
+
 
     Attributes
     ----------
@@ -103,10 +117,14 @@ class RandomDilatedShapeletTransform(BaseCollectionTransformer):
         The stored shapelets and relating information after a dataset has been
         processed.
         Each item in the list is a tuple containing the following 7 items:
-        (shapelet information gain, shapelet length, start position the shapelet was
-        extracted from, shapelet dimension, index of the instance the shapelet was
-        extracted from in fit, class value of the shapelet, The z-normalised shapelet
-        array)
+        - shapelet quality, 
+        - shapelet length, 
+        - start position the shapelet was extracted from,  
+        - dilation of the shapelet, 
+        - shapelet dimension,
+        - index of the instance the shapelet was extracted from in fit,
+        - class value of the shapelet, 
+        - the z-normalised shapelet array
 
     See Also
     --------
@@ -158,6 +176,7 @@ class RandomDilatedShapeletTransform(BaseCollectionTransformer):
         max_shapelets=None,
         min_shapelet_length=3,
         max_shapelet_length=None,
+        shapelet_pos = None,
         remove_self_similar=True,
         time_limit_in_minutes=0.0,
         contract_max_n_shapelet_samples=np.inf,
@@ -172,6 +191,7 @@ class RandomDilatedShapeletTransform(BaseCollectionTransformer):
         self.max_shapelets = max_shapelets
         self.min_shapelet_length = min_shapelet_length
         self.max_shapelet_length = max_shapelet_length
+        self.shapelet_pos = shapelet_pos
         self.remove_self_similar = remove_self_similar
 
         self.time_limit_in_minutes = time_limit_in_minutes
@@ -194,6 +214,7 @@ class RandomDilatedShapeletTransform(BaseCollectionTransformer):
         # Protected attributes
         self._max_shapelets = max_shapelets
         self._max_shapelet_length = max_shapelet_length
+        self.shapelet_pos = shapelet_pos
         self._n_jobs = n_jobs
         self._batch_size = batch_size
         self._class_counts = []
@@ -234,7 +255,6 @@ class RandomDilatedShapeletTransform(BaseCollectionTransformer):
         for i in range(1, self.n_cases_):
             if X[i].shape[1] < self.min_n_timepoints_:
                 self.min_n_timepoints_ = X[i].shape[1]
-
         if self.max_shapelets is None:
             self._max_shapelets = min(10 * self.n_cases_, 1000)
         if self._max_shapelets < self.n_classes_:
@@ -249,9 +269,9 @@ class RandomDilatedShapeletTransform(BaseCollectionTransformer):
         max_shapelets_per_class = int(self._max_shapelets / self.n_classes_)
         if max_shapelets_per_class < 1:
             max_shapelets_per_class = 1
-        # shapelet list content: quality, length, position, channel, inst_idx, cls_idx
+        # shapelet list content: quality, length, position, channel, dilation, inst_idx, cls_idx
         shapelets = List(
-            [List([(-1.0, -1, -1, -1, -1, -1)]) for _ in range(self.n_classes_)]
+            [List([(-1.0, -1, -1, -1, -1, -1, -1)]) for _ in range(self.n_classes_)]
         )
         n_shapelets_extracted = 0
 
@@ -331,26 +351,27 @@ class RandomDilatedShapeletTransform(BaseCollectionTransformer):
 
         self.shapelets = [
             (
-                s[0],
-                s[1],
-                s[2],
-                s[3],
-                s[4],
-                self.classes_[s[5]],
-                z_normalise_series(X[s[4]][s[3]][s[2] : s[2] + s[1]]),
+                s[0], # shapelet quality 
+                s[1], # shapelet length
+                s[2], # start pos
+                s[3], # dilation
+                s[4], # channel
+                s[5], # source time series index
+                self.classes_[s[6]], # class val
+                z_normalise_series(X[s[5]][s[4]][s[2] : s[2] + s[1]]),
             )
             for class_shapelets in shapelets
             for s in class_shapelets
             if s[0] > 0
         ]
-        self.shapelets.sort(reverse=True, key=lambda s: (s[0], -s[1], s[2], s[3], s[4]))
+        self.shapelets.sort(reverse=True, key=lambda s: (s[0], -s[1], s[2], s[4], s[5]))
 
         to_keep = self._remove_identical_shapelets(List(self.shapelets))
         self.shapelets = [n for (n, b) in zip(self.shapelets, to_keep) if b]
 
         self._sorted_indicies = []
         for s in self.shapelets:
-            sabs = np.abs(s[6])
+            sabs = np.abs(s[7]) # [7] = z norm
             self._sorted_indicies.append(
                 np.array(
                     sorted(range(s[1]), reverse=True, key=lambda j, sabs=sabs: sabs[j])
@@ -387,11 +408,11 @@ class RandomDilatedShapeletTransform(BaseCollectionTransformer):
                 n_jobs=self._n_jobs, backend=self.parallel_backend, prefer="threads"
             )(
                 delayed(_online_shapelet_distance)(
-                    series[shapelet[3]],
-                    shapelet[6],
+                    series[shapelet[4]], # [4] = channel
+                    shapelet[7], # [7] = z norm
                     self._sorted_indicies[n],
-                    shapelet[2],
-                    shapelet[1],
+                    shapelet[2], # [2] = start pos
+                    shapelet[1], # [1] = length
                 )
                 for n, shapelet in enumerate(self.shapelets)
             )
@@ -425,27 +446,45 @@ class RandomDilatedShapeletTransform(BaseCollectionTransformer):
 
     def _extract_random_shapelet(
         self, X, y, i, shapelets, max_shapelets_per_class, rng
-    ):
-        inst_idx = i % self.n_cases_
+    ):  # i is the shapelet number currently being extracted i.e the 5th shapelet
+        # Determine the index of the time seires the shapelet will come from
+        inst_idx = i % self.n_cases_ 
+        
+        # Determine the class index of the shapelet's time series
         cls_idx = int(y[inst_idx])
+        
+        # Get the worst quality score for this class so far
         worst_quality = (
-            shapelets[cls_idx][0][0]
+            # each shapelet's content: quality, length, position, channel, inst_idx, cls_idx
+            shapelets[cls_idx][0][0] # quality of first shapelet candidate in this shapelet's class
             if len(shapelets[cls_idx]) == max_shapelets_per_class
             else -1
         )
-        if self.length_selector == "RANDOM":
-            length, position = self._random_location()
-        # HERE ADD OPTION FOR FIXED LENGTH
-        channel = rng.randint(0, self.n_channels_)
 
+        length = self._get_length(rng)
+        position = self._get_pos(length,rng)
+        #TODO: Add dilation implementation
+        dilation = -1
+
+        # Randomly select a channel from which to extract the shapelet
+        channel = rng.randint(0, self.n_channels_)
+        
+        # Extract the shapelet candidate prior and normalize it prior to dilating
         shapelet = z_normalise_series(
             X[inst_idx][channel][position: position + length]
         )
+        
+        # Calculate the absolute values of the shapelet to sort by magnitude
         sabs = np.abs(shapelet)
+        
+        # Get indices that would sort the shapelet values in descending order
         sorted_indicies = np.array(
             sorted(range(length), reverse=True, key=lambda j: sabs[j])
         )
+        
+        # Calculate the quality of the shapelet based on the selected quality measure
         if self.shapelet_quality == "INFO_GAIN":
+            # Calculate quality using information gain
             quality = self._info_gain_shapelet_quality(
                 X,
                 y,
@@ -460,6 +499,7 @@ class RandomDilatedShapeletTransform(BaseCollectionTransformer):
                 worst_quality,
             )
         elif self.shapelet_quality == "F_STAT":
+            # Calculate quality using F-statistic
             quality = self._f_stat_shapelet_quality(
                 X,
                 y,
@@ -474,18 +514,45 @@ class RandomDilatedShapeletTransform(BaseCollectionTransformer):
                 worst_quality,
             )
         else:
-            raise ValueError("Unknown shapelet quality measure")
+            # Raise an error if an unknown shapelet quality measure is specified
+            raise ValueError("Unknown shapelet quality measure, must be INFO_GAIN or F_STAT")
 
-        return np.round(quality, 8), length, position, channel, inst_idx, cls_idx
+        # Return the shapelet - rounding the quality to 8 dp
+        return np.round(quality, 8), length, position, dilation, channel, inst_idx, cls_idx
 
-    def _random_location(self):
-        length = (
-            rng.randint(0, self._max_shapelet_length - self.min_shapelet_length)
-            + self.min_shapelet_length
-        )
-        position = rng.randint(0, self.min_n_timepoints_ - length)
-        return length, position
 
+    def _get_pos(self,length,rng):
+        if self.shapelet_pos is None:
+            return rng.randint(0, self.min_n_timepoints_ - length)
+        elif (self.shapelet_pos + length) <= self.min_n_timepoints_ and self.shapelet_pos >= 0:
+            return self.shapelet_pos
+        else: # Currently don't know how to provide a valid range tip
+            raise ValueError("This position is not within valid range") 
+        
+    def _get_length(self, rng):
+        if self.length_selector == "RANDOM":
+            length = (
+                rng.randint(0, self._max_shapelet_length - self.min_shapelet_length) 
+                + self.min_shapelet_length
+            )
+        # I have understood the task to give a random length out of these three options
+        if self.length_selector == "FIXED" or self.length_selector == "DILATED":
+                length = int(rng.choice([9, 11, 13]) )
+                #TODO: implement max shapelet length assignment
+        if self.length_selector == "DILATED":
+            dilation = self._find_possible_dilation(length)
+            length = 1 + (length - 1) * dilation
+        return length
+
+    def _find_possible_dilation(self, length):
+        # x is uniformly drawn from the range [0, log_2(m/l)] 
+        # where m is time series length and l is shapelet length
+        upper_bound = np.log2(self.min_n_timepoints_ / length)    
+        x = np.random.uniform(0, upper_bound)
+        # d = [2^x] where [] is floor
+        dilation = int(np.floor(2 ** x))
+        return dilation
+    
     @staticmethod
     @njit(fastmath=True, cache=True)
     def _info_gain_shapelet_quality(
@@ -582,8 +649,8 @@ class RandomDilatedShapeletTransform(BaseCollectionTransformer):
     def _merge_shapelets(
         shapelet_heap, candidate_shapelets, max_shapelets_per_class, cls_idx
     ):
-        for shapelet in candidate_shapelets:
-            if shapelet[5] == cls_idx and shapelet[0] > 0:
+        for shapelet in candidate_shapelets: # [0] = shapelet quality, [6] = class val
+            if shapelet[6] == cls_idx and shapelet[0] > 0: 
                 if (
                     len(shapelet_heap) == max_shapelets_per_class
                     and shapelet[0] < shapelet_heap[0][0]
@@ -606,7 +673,7 @@ class RandomDilatedShapeletTransform(BaseCollectionTransformer):
 
             for n in range(i + 1, len(shapelet_heap)):
                 if to_keep[n] and _is_self_similar(shapelet_heap[i], shapelet_heap[n]):
-                    if (shapelet_heap[i][0], -shapelet_heap[i][1]) >= (
+                    if (shapelet_heap[i][0], -shapelet_heap[i][1]) >= ( # [1] = length
                         shapelet_heap[n][0],
                         -shapelet_heap[n][1],
                     ):
@@ -629,8 +696,8 @@ class RandomDilatedShapeletTransform(BaseCollectionTransformer):
             for n in range(i + 1, len(shapelets)):
                 if (
                     to_keep[n]
-                    and shapelets[i][1] == shapelets[n][1]
-                    and np.array_equal(shapelets[i][6], shapelets[n][6])
+                    and shapelets[i][1] == shapelets[n][1] # [1] = length
+                    and np.array_equal(shapelets[i][7], shapelets[n][7]) # [7] = z norm
                 ):
                     to_keep[n] = False
 
@@ -811,8 +878,8 @@ def _binary_entropy(c1, c2):
 @njit(fastmath=True, cache=True)
 def _is_self_similar(s1, s2):
     # not self similar if from different series or dimension
-    if s1[4] == s2[4] and s1[3] == s2[3]:
-        if s2[2] <= s1[2] <= s2[2] + s2[1]:
+    if s1[5] == s2[5] and s1[4] == s2[4]: # [4] = channel, [5] = index of source
+        if s2[2] <= s1[2] <= s2[2] + s2[1]: # [1] = length, [2] = start pos 
             return True
         if s1[2] <= s2[2] <= s1[2] + s1[1]:
             return True
