@@ -63,3 +63,20 @@ def test_elastic_som_distances():
     assert not np.array_equal(
         elastic_som_ed.cluster_centers_, elastic_som_dtw_window.cluster_centers_
     )
+    
+"""Tests for the ElasticSOM clustering algorithm."""
+
+
+def test_elastic_som_univariate():
+    """Test ElasticSOM on a univariate dataset."""
+    X = make_example_3d_numpy(n_cases=10, n_channels=1, n_timepoints=20, return_y=False, random_state=1)
+    clst = ElasticSOM(n_clusters=3, random_state=1, num_iterations=10)
+    clst.fit(X)
+    assert clst.labels_.shape == (10,)
+    assert clst.cluster_centers_.shape == (2, 1, 20)
+
+    preds = clst.predict(X)
+    assert preds.shape == (10,)
+
+
+

@@ -63,6 +63,10 @@ class ElasticSOM(BaseClusterer):
         return dynamic_parameter / (1 + t / (max_iter / 2))
 
     def _gaussian(self, c, sigma):
+        second = self._yy
+        fourth = self._yy.T
+        sixth = self._yy.T[c]
+        temp_1 = -np.power(self._yy - self._yy.T[c], 2)
         d = 2 * sigma * sigma
         ax = np.exp(-np.power(self._xx - self._xx.T[c], 2) / d)
         ay = np.exp(-np.power(self._yy - self._yy.T[c], 2) / d)
@@ -111,7 +115,13 @@ class ElasticSOM(BaseClusterer):
             it = np.nditer(g, flags=["multi_index"])
 
             while not it.finished:
+                test = it.multi_index
                 temp = self._weights[it.multi_index].reshape(1, -1)
+                val = self._elastic_update(
+                    x, temp, g[it.multi_index]
+                )
+                temp_weights = self._weights.copy()
+                try_set = temp_weights[it.multi_index] = val
                 self._weights[it.multi_index] = self._elastic_update(
                     x, temp, g[it.multi_index]
                 )
@@ -128,7 +138,7 @@ class ElasticSOM(BaseClusterer):
         num_iterations = self.num_iterations * X.shape[-1]
         iterations = np.arange(num_iterations) % len(X)
         # Randomise the iterations
-        self._random_state.shuffle(iterations)
+        # self._random_state.shuffle(iterations)
 
         for t, iteration in enumerate(iterations):
             if self.verbose:
@@ -139,9 +149,14 @@ class ElasticSOM(BaseClusterer):
             )
         winner_coordinates = np.array([self.winner(x) for x in X]).T
         self.labels_ = np.ravel_multi_index(winner_coordinates, (1, self.n_clusters))
+        temp_labels = self.labels_.copy()
+
         self.cluster_centers_ = self._weights.reshape(
             self.n_clusters, X.shape[1], X.shape[2]
         )
+
+        temp_cluster_centers = self.cluster_centers_.copy()
+        stop = ""
 
     def _check_params(self, X):
         self._random_state = check_random_state(self.random_state)
@@ -149,6 +164,10 @@ class ElasticSOM(BaseClusterer):
         # random initialization
         self._weights = self._random_state.rand(1, self.n_clusters, input_len) * 2 - 1
         self._weights /= np.linalg.norm(self._weights, axis=-1, keepdims=True)
+        for i in range(self.n_clusters):
+            self._weights[0, i] = X[i, 0]
+
+        temp = self._weights.copy()
 
         self._activation_map = np.zeros((1, self.n_clusters))
         _neigx = np.arange(1)
