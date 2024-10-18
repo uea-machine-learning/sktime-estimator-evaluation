@@ -3,6 +3,8 @@ from tsml_eval._wip.forecasting.base import BaseForecaster
 from abc import ABC, abstractmethod
 from typing import final
 from sklearn.linear_model import LinearRegression
+from aeon.transformations.collection import PeriodogramTransformer
+from aeon.transformations.series import
 class BaseWindowForecaster(BaseForecaster):
     def __init__(self, window, horizon=1, regressor=LinearRegression()):
         self.regressor = regressor
@@ -24,12 +26,12 @@ class BaseWindowForecaster(BaseForecaster):
             Fitted estimator
         """
         # Window data
-        y2=np.lib.stride_tricks.sliding_window_view(y, window_shape=self.window)
+        X=np.lib.stride_tricks.sliding_window_view(y, window_shape=self.window)
         # Ignore the final horizon values: need to store these for pred with empty y
-        y2=y2[:-self.horizon]
+        X=X[:-self.horizon]
         # Extract y
-        y=X[self.window+self.horizon-1:]
-        self.regressor.fit(X2,y)
+        y=y[self.window+self.horizon-1:]
+        self.regressor.fit(X,y)
         return self
 
     def predict(self, y=None, X=None):

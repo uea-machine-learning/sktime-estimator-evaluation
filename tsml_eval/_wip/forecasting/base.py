@@ -8,10 +8,15 @@ cons: order of y and X reversed, predict requires y, which looks weird
 
 ignore exogenous for now.
 
-    def fit(self, X):
-        y the series to train the forecaster
-    def predict(self, y, X=None):
-        y the series to forecast, X possible exogenous data
+
+LINKS:
+hackmd general notes, including nixtla
+https://hackmd.io/iyaccjQBQtC2bGk_y_M8tA
+aeon enhancement proposal
+https://github.com/aeon-toolkit/aeon-admin/pull/14
+
+
+
 
 """
 
