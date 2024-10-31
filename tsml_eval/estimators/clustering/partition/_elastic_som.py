@@ -117,9 +117,7 @@ class ElasticSOM(BaseClusterer):
             while not it.finished:
                 test = it.multi_index
                 temp = self._weights[it.multi_index].reshape(1, -1)
-                val = self._elastic_update(
-                    x, temp, g[it.multi_index]
-                )
+                val = self._elastic_update(x, temp, g[it.multi_index])
                 temp_weights = self._weights.copy()
                 try_set = temp_weights[it.multi_index] = val
                 self._weights[it.multi_index] = self._elastic_update(

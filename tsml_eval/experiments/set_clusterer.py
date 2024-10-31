@@ -418,6 +418,8 @@ experimental_clusterers = [
     # Final model KESBA
     "kesba-forgy-restarts-twe",
     "kesba-forgy-restarts-msm",
+    "kesba-eklan-twe",
+    "kesba-eklan-msm",
 ]
 
 
