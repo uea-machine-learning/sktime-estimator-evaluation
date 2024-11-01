@@ -4,7 +4,6 @@ from abc import ABC, abstractmethod
 from typing import final
 from sklearn.linear_model import LinearRegression
 from aeon.transformations.collection import PeriodogramTransformer
-from aeon.transformations.series import
 class BaseWindowForecaster(BaseForecaster):
     def __init__(self, window, horizon=1, regressor=LinearRegression()):
         self.regressor = regressor
