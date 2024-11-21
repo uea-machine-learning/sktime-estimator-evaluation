@@ -107,7 +107,9 @@ def run_experiment(args):
         # Do not include paths to your local directories here in PRs
         # If threading is required, see the threaded version of this file
         estimators = [
-            "kesbaf-no-window",
+            "kasba-plus-plus-update",
+            "kasba-average-update-centres-same",
+            "kasba-plus-plus-average-update-centres-same",
         ]
         for estimator_name in estimators:
             data_path = _TEST_DATA_PATH

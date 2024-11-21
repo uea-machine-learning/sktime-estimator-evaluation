@@ -11,7 +11,7 @@ from aeon.clustering import (
     TimeSeriesKMeans,
     TimeSeriesKMedoids,
 )
-from aeon.transformations.collection import TimeSeriesScaler
+from aeon.transformations.collection import Normalizer
 from sklearn.cluster import KMeans
 
 from tsml_eval.utils.datasets import load_experiment_data
@@ -213,6 +213,10 @@ distance_based_clusterers = [
     "kesbaf-mba",
     "kesbaf-twe",
     "kesbaf-twe-no-window",
+    # KASBA versions
+    "kasba-plus-plus-update",
+    "kasba-average-update-centres-same",
+    "kasba-plus-plus-average-update-centres-same",
 ]
 
 feature_based_clusterers = [
@@ -494,6 +498,67 @@ def _set_kesba_clusterer(
     )
 
 
+def _set_kasba_clusterer(
+        c,
+        random_state,
+        n_jobs,
+        fit_contract,
+        checkpoint,
+        data_vars,
+        row_normalise,
+        kwargs,
+):
+    distance_measure = "msm"
+    if "distance_params" in kwargs:
+        distance_params = kwargs["distance_params"]
+    else:
+        distance_params = _get_distance_default_params(
+            distance_measure, data_vars, row_normalise
+        )
+
+    skip_barycentre_if_labels_no_change=False
+    use_new_kmeans_plus=False
+    use_check_centres_change_assignment=False
+
+    if c == "kasba-plus-plus-update":
+        use_new_kmeans_plus=True
+    elif c == "kasba-average-update-centres-same":
+        use_new_kmeans_plus = False
+        skip_barycentre_if_labels_no_change = True
+        use_check_centres_change_assignment = True
+    elif c == "kasba-plus-plus-average-update-centres-same":
+        use_new_kmeans_plus = True
+        skip_barycentre_if_labels_no_change = True
+        use_check_centres_change_assignment = True
+    else:
+        raise ValueError(f"Unknown kasba clusterer {c}")
+
+    return KESBA(
+        distance="msm",
+        ba_subset_size=0.5,
+        initial_step_size=0.05,
+        final_step_size=0.005,
+        window=1.0,
+        max_iter=300,
+        tol=1e-6,
+        verbose=True,
+        random_state=random_state,
+        distance_params=distance_params,
+        average_method="lr_random_subset_ssg",
+        use_lloyds=False,
+        count_distance_calls=True,
+        use_mean_as_init=False,
+        use_previous_cost=True,
+        use_all_first_subset_ba_iteration=True,
+        ba_lr_func="exponential",
+        decay_rate=0.1,
+        skip_barycentre_if_labels_no_change=skip_barycentre_if_labels_no_change,
+        use_new_kmeans_plus=use_new_kmeans_plus,
+        use_check_centres_change_assignment=use_check_centres_change_assignment,
+    )
+
+
+
 def _set_clusterer_deep_learning(
     c, random_state, n_jobs, fit_contract, checkpoint, kwargs
 ):
@@ -517,6 +582,17 @@ def _set_clusterer_distance_based(
     row_normalise,
     kwargs,
 ):
+    if "kasba" in c:
+        return _set_kasba_clusterer(
+            c,
+            random_state,
+            n_jobs,
+            fit_contract,
+            checkpoint,
+            data_vars,
+            row_normalise,
+            kwargs,
+        )
     if "kesbaf" in c:
         return _set_kesbaf_clusterer(
             c,
@@ -762,7 +838,7 @@ def _get_distance_default_params(
             # cant handle unequal length series
             if isinstance(X_train, np.ndarray):
                 if row_normalise:
-                    scaler = TimeSeriesScaler()
+                    scaler = Normalizer()
                     X_train = scaler.fit_transform(X_train)
 
                 return {"g": X_train.std(axis=0).sum()}
