@@ -92,8 +92,7 @@ def run_experiment(args):
                 n_clusters=args.n_clusters,
                 clusterer_name=args.estimator_name,
                 resample_id=args.resample_id,
-                # build_test_file=args.test_fold,
-                build_test_file=False,
+                build_test_file=args.test_fold,
                 write_attributes=args.write_attributes,
                 att_max_shape=args.att_max_shape,
                 benchmark_time=args.benchmark_time,
@@ -107,9 +106,8 @@ def run_experiment(args):
         # Do not include paths to your local directories here in PRs
         # If threading is required, see the threaded version of this file
         estimators = [
-            "kasba-plus-plus-update",
-            "kasba-average-update-centres-same",
-            "kasba-plus-plus-average-update-centres-same",
+            "kasba",
+            "kasba-numba"
         ]
         for estimator_name in estimators:
             data_path = _TEST_DATA_PATH
@@ -118,7 +116,7 @@ def run_experiment(args):
             row_normalise = False
             n_clusters = -1
             resample_id = 0
-            test_fold = False
+            test_fold = True
             write_attributes = True
             att_max_shape = 0
             benchmark_time = True
@@ -126,7 +124,7 @@ def run_experiment(args):
             predefined_resample = False
             fit_contract = 0
             checkpoint = None
-            combine_test_train_split = True
+            combine_test_train_split = False
             kwargs = {}
 
             clusterer = get_clusterer_by_name(

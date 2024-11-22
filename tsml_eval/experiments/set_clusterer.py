@@ -11,6 +11,8 @@ from aeon.clustering import (
     TimeSeriesKMeans,
     TimeSeriesKMedoids,
 )
+from aeon.clustering._kasba import KASBA
+from aeon.clustering._kasba_numba import KASBA_NUMBA
 from aeon.transformations.collection import Normalizer
 from sklearn.cluster import KMeans
 
@@ -217,6 +219,8 @@ distance_based_clusterers = [
     "kasba-plus-plus-update",
     "kasba-average-update-centres-same",
     "kasba-plus-plus-average-update-centres-same",
+    "kasba",
+    "kasba-numba"
 ]
 
 feature_based_clusterers = [
@@ -519,6 +523,43 @@ def _set_kasba_clusterer(
     skip_barycentre_if_labels_no_change=False
     use_new_kmeans_plus=False
     use_check_centres_change_assignment=False
+
+    if c == "kasba":
+        return KASBA(
+            distance="msm",
+            ba_subset_size=0.5,
+            initial_step_size=0.05,
+            max_iter=300,
+            tol=1e-6,
+            verbose=True,
+            random_state=random_state,
+            distance_params=distance_params,
+            count_distance_calls=True,
+            decay_rate=0.1,
+        )
+    elif c == "kasba-numba":
+        clst = KASBA_NUMBA(
+            distance="msm",
+            ba_subset_size=0.5,
+            initial_step_size=0.05,
+            max_iter=300,
+            tol=1e-6,
+            verbose=True,
+            random_state=random_state,
+            distance_params=distance_params,
+            count_distance_calls=True,
+            decay_rate=0.1,
+        )
+        if data_vars is not None:
+            X_train, _, _, _, _ = load_experiment_data(*data_vars)
+
+            # cant handle unequal length series
+            if isinstance(X_train, np.ndarray):
+                if row_normalise:
+                    scaler = Normalizer()
+                    X_train = scaler.fit_transform(X_train)
+            clst._create_numba_caches(X_train)
+        return clst
 
     if c == "kasba-plus-plus-update":
         use_new_kmeans_plus=True
