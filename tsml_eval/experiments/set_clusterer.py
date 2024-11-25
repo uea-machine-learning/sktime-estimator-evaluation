@@ -544,10 +544,9 @@ def _set_kasba_clusterer(
             initial_step_size=0.05,
             max_iter=300,
             tol=1e-6,
-            verbose=True,
+            verbose=False,
             random_state=random_state,
             distance_params=distance_params,
-            count_distance_calls=True,
             decay_rate=0.1,
         )
         if data_vars is not None:
