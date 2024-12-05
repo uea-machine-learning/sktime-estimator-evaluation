@@ -15,7 +15,6 @@ if __name__ == "__main__":
         dataset_list = f.read().splitlines()
 
     print("Running test data to ensure caches are built")
-    run_experiment([])
 
     for i in range(len(dataset_list)):
         dataset_name = dataset_list[i]
@@ -25,7 +24,7 @@ if __name__ == "__main__":
             [
                 DATASET_PATH,
                 RESULT_PATH,
-                "kesbaf-no-window",
+                "kasba-numba",
                 dataset_name,
                 "0",
                 "-te",
