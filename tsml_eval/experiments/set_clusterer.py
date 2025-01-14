@@ -136,6 +136,18 @@ distance_based_clusterers = [
     "kspectralcentroid",
     "timeserieskshape",
     "timeserieskernelkmeans",
+    "kmeans-gamma-1.0-soft_msm",
+    "kmeans-gamma-1.0-soft_dtw",
+    "kmeans-gamma-1.0-soft_twe",
+    "kmeans-gamma-0.1-soft_msm",
+    "kmeans-gamma-0.1-soft_dtw",
+    "kmeans-gamma-0.1-soft_twe",
+    "kmeans-gamma-0.01-soft_msm",
+    "kmeans-gamma-0.01-soft_dtw",
+    "kmeans-gamma-0.01-soft_twe",
+    "kmeans-gamma-0.001-soft_msm",
+    "kmeans-gamma-0.001-soft_dtw",
+    "kmeans-gamma-0.001-soft_twe",
 ]
 feature_based_clusterers = [
     ["catch22", "catch22clusterer"],
@@ -348,6 +360,21 @@ def _set_clusterer_distance_based(
                 average_params=average_params,
                 **kwargs,
             )
+        elif "gamma" in c:
+            gamma = float(c.split("-")[-2])
+            distance_params["gamma"] = gamma
+            average_params["gamma"] = gamma
+            return TimeSeriesKMeans(
+                max_iter=300,
+                n_init=1,
+                init="kmeans++",
+                distance=distance,
+                distance_params=distance_params,
+                random_state=random_state,
+                averaging_method="soft_ba",
+                average_params=average_params,
+                **kwargs,
+            )
         else:
             return TimeSeriesKMeans(
                 max_iter=50,
@@ -447,7 +474,8 @@ def _get_distance_default_params(
     dist_name: str, data_vars: list, row_normalise: bool
 ) -> dict:
     if dist_name == "dtw" or dist_name == "ddtw":
-        return {"window": 0.2}
+        # return {"window": 0.2}
+        return {}
     if dist_name == "lcss":
         return {"epsilon": 1.0}
     if dist_name == "erp":
@@ -477,6 +505,12 @@ def _get_distance_default_params(
         return {"warp_penalty": 1.0}
     if dist_name == "shape_dtw":
         return {"descriptor": "identity", "reach": 30}
+    if dist_name == "soft_dtw":
+        return {"gamma": 1.0}
+    if dist_name == "soft_msm":
+        return {"gamma": 1.0, "c": 1.0}
+    if dist_name == "soft_twe":
+        return {"gamma": 1.0, "nu": 0.001, "lmbda": 1.0}
     return {}
 
 

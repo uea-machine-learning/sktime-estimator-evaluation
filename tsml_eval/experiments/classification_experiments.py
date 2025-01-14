@@ -111,32 +111,51 @@ def run_experiment(args):
         fit_contract = 0
         checkpoint = None
         kwargs = {}
+        estimators = [
+            ["nearest-centroid-dtw"],
+            ["nearest-centroid-twe"],
+            ["nearest-centroid-msm"],
+            ["nearest-centroid-gamma-1-soft_dtw"],
+            ["nearest-centroid-gamma-1-soft_msm"],
+            ["nearest-centroid-gamma-1-soft_twe"],
+            ["nearest-centroid-gamma-0.1-soft_dtw"],
+            ["nearest-centroid-gamma-0.1-soft_msm"],
+            ["nearest-centroid-gamma-0.1-soft_twe"],
+            ["nearest-centroid-gamma-0.01-soft_dtw"],
+            ["nearest-centroid-gamma-0.01-soft_msm"],
+            ["nearest-centroid-gamma-0.01-soft_twe"],
+            ["nearest-centroid-gamma-0.001-soft_dtw"],
+            ["nearest-centroid-gamma-0.001-soft_msm"],
+            ["nearest-centroid-gamma-0.001-soft_twe"],
+        ]
+        for estimator_name in estimators:
+            estimator_name = estimator_name[0]
 
-        classifier = get_classifier_by_name(
-            estimator_name,
-            random_state=resample_id,
-            n_jobs=1,
-            fit_contract=fit_contract,
-            checkpoint=checkpoint,
-            **kwargs,
-        )
-        print(f"Local Run of {estimator_name} ({classifier.__class__.__name__}).")
+            classifier = get_classifier_by_name(
+                estimator_name,
+                random_state=resample_id,
+                n_jobs=1,
+                fit_contract=fit_contract,
+                checkpoint=checkpoint,
+                **kwargs,
+            )
+            print(f"Local Run of {estimator_name} ({classifier.__class__.__name__}).")
 
-        load_and_run_classification_experiment(
-            data_path,
-            results_path,
-            dataset_name,
-            classifier,
-            row_normalise=row_normalise,
-            classifier_name=estimator_name,
-            resample_id=resample_id,
-            build_train_file=train_fold,
-            write_attributes=write_attributes,
-            att_max_shape=att_max_shape,
-            benchmark_time=benchmark_time,
-            overwrite=overwrite,
-            predefined_resample=predefined_resample,
-        )
+            load_and_run_classification_experiment(
+                data_path,
+                results_path,
+                dataset_name,
+                classifier,
+                row_normalise=row_normalise,
+                classifier_name=estimator_name,
+                resample_id=resample_id,
+                build_train_file=train_fold,
+                write_attributes=write_attributes,
+                att_max_shape=att_max_shape,
+                benchmark_time=benchmark_time,
+                overwrite=overwrite,
+                predefined_resample=predefined_resample,
+            )
 
 
 if __name__ == "__main__":

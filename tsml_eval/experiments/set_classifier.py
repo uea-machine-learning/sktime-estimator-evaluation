@@ -53,6 +53,22 @@ distance_based_classifiers = [
     ["grailclassifier", "grail"],
     ["proximitytree", "proximitytreeclassifier"],
     ["proximityforest", "pf"],
+    ["nearest-centroid-euclidean"],
+    ["nearest-centroid-dtw"],
+    ["nearest-centroid-twe"],
+    ["nearest-centroid-msm"],
+    ["nearest-centroid-gamma-1-soft_dtw"],
+    ["nearest-centroid-gamma-1-soft_msm"],
+    ["nearest-centroid-gamma-1-soft_twe"],
+    ["nearest-centroid-gamma-0.1-soft_dtw"],
+    ["nearest-centroid-gamma-0.1-soft_msm"],
+    ["nearest-centroid-gamma-0.1-soft_twe"],
+    ["nearest-centroid-gamma-0.01-soft_dtw"],
+    ["nearest-centroid-gamma-0.01-soft_msm"],
+    ["nearest-centroid-gamma-0.01-soft_twe"],
+    ["nearest-centroid-gamma-0.001-soft_dtw"],
+    ["nearest-centroid-gamma-0.001-soft_msm"],
+    ["nearest-centroid-gamma-0.001-soft_twe"],
 ]
 feature_based_classifiers = [
     "summary-500",
@@ -417,6 +433,33 @@ def _set_classifier_dictionary_based(
 def _set_classifier_distance_based(
     c, random_state, n_jobs, fit_contract, checkpoint, kwargs
 ):
+    if "nearest-centroid" in c:
+        from aeon.classification.distance_based import NearestCentroid
+
+        from tsml_eval.experiments.set_clusterer import _get_distance_default_params
+
+        distance = c.split("-")[-1]
+        if "soft" in distance:
+            average = "soft_ba"
+        elif distance == "euclidean":
+            average = "mean"
+        else:
+            average = "ba"
+
+        distance_params = _get_distance_default_params(
+            distance, row_normalise=True, data_vars=None
+        )
+
+        if "gamma" in c:
+            gamma_val = float(c.split("-")[-2])
+            distance_params = {**distance_params, "gamma": gamma_val}
+
+        return NearestCentroid(
+            distance=distance,
+            average_method=average,
+            distance_params=distance_params,
+            **kwargs,
+        )
     if c == "kneighborstimeseriesclassifier" or c == "dtw" or c == "1nn-dtw":
         from aeon.classification.distance_based import KNeighborsTimeSeriesClassifier
 
