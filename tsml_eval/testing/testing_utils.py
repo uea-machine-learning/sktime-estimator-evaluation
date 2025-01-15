@@ -24,8 +24,13 @@ _TEST_OUTPUT_PATH = f"{os.path.dirname(Path(__file__).parent.parent)}/test_outpu
 
 
 def _check_set_method(
-    set_method, estimator_sub_list, estimator_dict, all_estimator_names
+    set_method,
+    estimator_sub_list,
+    estimator_dict,
+    all_estimator_names,
+    return_estimator=False,
 ):
+    estimators = []
     for estimator_names in estimator_sub_list:
         estimator_names = (
             [estimator_names] if isinstance(estimator_names, str) else estimator_names
@@ -38,34 +43,43 @@ def _check_set_method(
             all_estimator_names.append(estimator_alias)
 
             try:
-                e = set_method(estimator_alias)
+                out = set_method(estimator_alias)
             except ModuleNotFoundError as err:
                 exempt_errors = [
                     "optional dependency",
                     "soft dependency",
                     "python version",
                 ]
-                if any(s in str(err) for s in exempt_errors):
+                if any(s in str(err) for s in exempt_errors) or "." not in str(err):
                     continue
                 else:
                     raise err
 
-            assert e is not None, f"Estimator {estimator_alias} not found"
-            assert isinstance(
-                e, BaseEstimator
-            ), f"Estimator {estimator_alias} is not a BaseEstimator"
+            assert out is not None, f"Estimator {estimator_alias} not found"
 
-            c_name = e.__class__.__name__.lower()
-            if c_name == estimator_alias.lower():
-                estimator_dict[c_name] = True
-            elif c_name not in estimator_dict:
-                estimator_dict[c_name] = False
+            if not isinstance(out, list):
+                out = [out]
+
+            for e in out:
+                assert isinstance(
+                    e, BaseEstimator
+                ), f"Estimator {estimator_alias} is not a BaseEstimator"
+
+                e_name = e.__class__.__name__.lower()
+                if e_name == estimator_alias.lower():
+                    estimator_dict[e_name] = True
+                elif e_name not in estimator_dict:
+                    estimator_dict[e_name] = False
+
+            if return_estimator:
+                estimators.append(e)
+    if return_estimator:
+        return estimators
 
 
 EXEMPT_ESTIMATOR_NAMES = [
     "channelensembleregressor",
     "gridsearchcv",
-    "transformedtargetforecaster",
 ]
 
 
