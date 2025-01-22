@@ -10,6 +10,51 @@ from tsml_eval.imbalance._wrappers import _SmoteKNN
 
 
 class TimeSeriesSMOTEKnn(BaseTimeSeriesImbalance, SMOTE):
+    """SMOTE oversampling with KNN for time series data.
+
+    Extends the SMOTE algorithm to support time series data using K-Nearest
+    Neighbors (KNN) with elastic distance measures.
+
+    Parameters
+    ----------
+    sampling_strategy : str or dict, default='auto'
+        The sampling strategy to use. When a string, it specifies the class
+        sampling strategy:
+        - 'minority': resample the minority class.
+        - 'not minority': resample all classes but the minority class.
+        - 'not majority': resample all classes but the majority class.
+        - 'all': resample all classes.
+        When a dictionary, the keys are the target classes, and the values are the
+        desired number of samples after resampling.
+    random_state : int, np.random.RandomState, or None, default=None
+        Controls the random number generator for reproducibility.
+    distance : str or callable, default='dtw'
+        Distance metric for time series data. If a string, it must be a valid
+        distance metric name available in `aeon.distances`. If a callable, it must
+        accept two 2D numpy arrays of shape `(n_channels, n_timepoints)` and return
+        a float.
+    distance_params : dict, default=None
+        Parameters for the distance metric, if `distance` is specified as a string.
+    n_neighbors : int, default=1
+        Number of neighbors to consider in the KNN model used within SMOTE.
+    weights : str or callable, default='uniform'
+        Weighting mechanism for KNN voting. Options are:
+        - 'uniform': All neighbors contribute equally.
+        - 'distance': Neighbors contribute inversely proportional to their distance.
+        - A callable function that computes custom weights.
+    n_jobs : int, default=1
+        Number of parallel jobs to use for neighbor searches.
+        - `None`: Use a single process.
+        - `-1`: Use all available processors.
+
+    Attributes
+    ----------
+    sampling_strategy_ : dict
+        Dictionary with the class labels as keys and the number of samples to
+        generate as values.
+    nn_k_ : _SmoteKNN
+        The fitted KNN estimator used in SMOTE.
+    """
 
     def __init__(
         self,

@@ -2,15 +2,68 @@ from collections import Counter
 from typing import Optional, Union
 
 import numpy as np
-from aeon.classification.base import BaseClassifier
 from imblearn.utils._validation import check_sampling_strategy
 from sklearn.utils import check_random_state
 
+from tsml_eval.imbalance._base import BaseTimeSeriesImbalance
 from tsml_eval.imbalance._utils import _make_samples, unbalance_data
 from tsml_eval.imbalance._wrappers import _ADASYN, _SmoteKNN
 
 
-class TimeSeriesADASYN(_ADASYN, BaseClassifier):
+class TimeSeriesADASYN(BaseTimeSeriesImbalance, _ADASYN):
+    """ADASYN oversampling for time series data.
+
+    Oversample using the Adaptive Synthetic (ADASYN) algorithm with time series
+    support through K-Nearest Neighbors (KNN).
+
+    This class extends the standard ADASYN algorithm to support time series data by
+    utilising time series distance measures within the KNN component. The ADASYN
+    algorithm generates synthetic samples adaptively based on the local data
+    distribution to handle class imbalance, while the KNN component supports
+    custom distance measures for time series.
+
+    Parameters
+    ----------
+    sampling_strategy : str or dict, default='auto'
+        The sampling strategy to use. When a string, it specifies the class
+        sampling strategy:
+        - 'minority': resample the minority class.
+        - 'not minority': resample all classes but the minority class.
+        - 'not majority': resample all classes but the majority class.
+        - 'all': resample all classes.
+        When a dictionary, the keys are the target classes, and the values are the
+        desired number of samples after resampling.
+    random_state : int, np.random.RandomState, or None, default=None
+        Controls the random number generator for reproducibility.
+    distance : str or callable, default='dtw'
+        Distance metric for time series data. If a string, it must be a valid
+        distance metric name available in `aeon.distances`. If a callable, it must
+        accept two 2D numpy arrays of shape `(n_channels, n_timepoints)` and return
+        a float.
+    distance_params : dict, default=None
+        Parameters for the distance metric, if `distance` is specified as a string.
+    n_neighbors : int, default=1
+        The number of neighbors to consider in the KNN model used within ADASYN.
+    weights : str or callable, default='uniform'
+        Weighting mechanism for KNN voting. Options are:
+        - 'uniform': All neighbors contribute equally.
+        - 'distance': Neighbors contribute inversely proportional to their distance.
+        - A callable function that computes custom weights.
+    n_jobs : int, default=1
+        Number of parallel jobs to use for neighbor searches.
+        - `None`: Use a single process.
+        - `-1`: Use all available processors.
+
+    Attributes
+    ----------
+    sampling_strategy_ : dict
+        Dictionary with the class labels as keys and the number of samples to
+        generate as values.
+    k_neighbors : _SmoteKNN
+        A KNN estimator configured with the specified distance metric, parameters,
+        and weights.
+    """
+
     def __init__(
         self,
         *,
@@ -31,7 +84,7 @@ class TimeSeriesADASYN(_ADASYN, BaseClassifier):
 
         self.sampling_strategy_ = None
 
-        BaseClassifier.__init__(self)
+        BaseTimeSeriesImbalance.__init__(self)
         _ADASYN.__init__(
             self,
             sampling_strategy=sampling_strategy,
@@ -51,38 +104,12 @@ class TimeSeriesADASYN(_ADASYN, BaseClassifier):
     def _predict(self, X) -> np.ndarray:
         return _ADASYN.predict(self, X)
 
-    def fit_resample(self, X, y, **kwargs):
-        """Resample the dataset.
-
-        Parameters
-        ----------
-        X : {array-like, dataframe, sparse matrix} of shape \
-                (n_samples, n_features)
-            Matrix containing the data which have to be sampled.
-
-        y : array-like of shape (n_samples,)
-            Corresponding label for each sample in X.
-
-        Returns
-        -------
-        X_resampled : {array-like, dataframe, sparse matrix} of shape \
-                (n_samples_new, n_features)
-            The array containing the resampled data.
-
-        y_resampled : array-like of shape (n_samples_new,)
-            The corresponding label of `X_resampled`.
-        """
-        X, y, single_class = self._fit_setup(X, y)
+    def _fit_resample(self, X, y, **kwargs):
         self._random_state = check_random_state(self.random_state)
-
-        if not single_class:
-
-            self.sampling_strategy_ = check_sampling_strategy(
-                self.sampling_strategy, y, self._sampling_type
-            )
-
-            return self._fit_resample(X, y, **kwargs)
-        return X
+        self.sampling_strategy_ = check_sampling_strategy(
+            self.sampling_strategy, y, self._sampling_type
+        )
+        return _ADASYN._fit_resample(self, X, y, **kwargs)
 
     def _make_samples(
         self, X, y_dtype, y_type, nn_data, nn_num, n_samples, step_size=1.0, y=None
